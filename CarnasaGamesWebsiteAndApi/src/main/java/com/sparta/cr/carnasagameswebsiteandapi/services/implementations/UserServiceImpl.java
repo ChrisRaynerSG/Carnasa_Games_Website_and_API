@@ -71,11 +71,7 @@ public class UserServiceImpl implements UserServiceable {
             //username already taken exception
             return null;
         }
-        if(!validatePassword(user.getPassword())){
-            //invalid password exception here
-            return null;
-        }
-        if(!validateEmail(user.getEmail())){
+        if(!validateUserDetails(user)){
             return null;
         }
         if (getUserByEmail(user.getEmail()).isPresent()){
@@ -83,13 +79,27 @@ public class UserServiceImpl implements UserServiceable {
             return null;
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+        return userRepository.save(encryptPassword(user));
     }
 
     @Override
     public UserModel updateUser(UserModel user) {
-        return null;
+        if(getUser(user.getId()).isEmpty()){
+            return null;
+        }
+        if(user.getPassword().equals(getUser(user.getId()).get().getPassword())){
+            if(!validateEmail(user.getEmail())){
+                return null;
+            }
+            return userRepository.save(user);
+        }
+        else {
+            if(!validateUserDetails(user)){
+                return null;
+            }
+            return userRepository.save(encryptPassword(user));
+        }
+        //todo validation for images and other fields
     }
 
     @Override
@@ -102,5 +112,12 @@ public class UserServiceImpl implements UserServiceable {
     }
     private boolean validateEmail(String email) {
         return email.matches("^([a-zA-Z0-9_\\-.]+)@([a-zA-Z0-9_\\-.]+)\\.([a-zA-Z]{2,5})$");
+    }
+    private boolean validateUserDetails(UserModel user) {
+        return validateEmail(user.getEmail()) && validatePassword(user.getPassword());
+    }
+    private UserModel encryptPassword(UserModel user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return user;
     }
 }

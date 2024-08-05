@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -34,6 +35,8 @@ public class UserServiceTest {
     @Autowired
     PasswordEncoder passwordEncoderTest;
 
+    private UserModel user1;
+    private UserModel user2;
     private List<UserModel> users;
 
     @InjectMocks
@@ -41,15 +44,17 @@ public class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        UserModel user1 = new UserModel();
+
+        user1 = new UserModel();
         user1.setId(1234);
         user1.setUsername("admin");
-        user1.setPassword("admin");
+        user1.setPassword(passwordEncoderTest.encode("Password@1"));
         user1.setEmail("admin@admin.com");
-        UserModel user2 = new UserModel();
+
+        user2 = new UserModel();
         user2.setId(5678);
         user2.setUsername("user");
-        user2.setPassword("password");
+        user2.setPassword(passwordEncoderTest.encode("Password@1"));
         user2.setEmail("user@user.com");
 
         users = new ArrayList<>();
@@ -126,5 +131,54 @@ public class UserServiceTest {
         Assertions.assertEquals(user.getUsername(), createdUser.getUsername());
         Assertions.assertEquals(user.getEmail(), createdUser.getEmail());
         verify(userRepository, times(1)).save(user);
+    }
+
+    @Test
+    void updateUserReturnsNullWhenUserIdDoesNotExist(){
+        UserModel user = new UserModel();
+        user.setId(123456);
+        user.setUsername("admin2");
+        user.setPassword("Password@1");
+        user.setEmail("admin2@admin.com");
+        when(userRepository.findAll()).thenReturn(users);
+        UserModel updatedUser = userServiceImpl.updateUser(user);
+        Assertions.assertNull(updatedUser);
+    }
+
+    @Test
+    void updateUserReturnsNullIfNewPasswordIsInvalid(){
+        UserModel user = new UserModel();
+        user.setId(1234);
+        user.setUsername("admin");
+        user.setPassword("password");
+        user.setEmail("admin@admin.com");
+        when(userRepository.findAll()).thenReturn(users);
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user1));
+        UserModel updatedUser = userServiceImpl.updateUser(user);
+        Assertions.assertNull(updatedUser);
+    }
+    @Test
+    void updateUserReturnsNullIfNewEmailIsInvalid(){
+        UserModel user = new UserModel();
+        user.setId(1234);
+        user.setUsername("admin");
+        user.setPassword(user1.getPassword());
+        user.setEmail("admin@admin");
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user1));
+        UserModel updatedUser = userServiceImpl.updateUser(user);
+        Assertions.assertNull(updatedUser);
+    }
+    @Test
+    void updateUserReturnsCorrectUserIfSuccessfullyUpdatedPassword(){
+        UserModel user = new UserModel();
+        user.setId(1234);
+        user.setUsername("admin");
+        user.setPassword("Password@1");
+        user.setEmail("admin@admin.com");
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user1));
+        when(passwordEncoder.encode(any(String.class))).thenReturn(passwordEncoderTest.encode(user.getPassword()));
+        when(userRepository.save(any(UserModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        UserModel updatedUser = userServiceImpl.updateUser(user);
+        Assertions.assertTrue(passwordEncoderTest.matches("Password@1", updatedUser.getPassword()));
     }
 }
