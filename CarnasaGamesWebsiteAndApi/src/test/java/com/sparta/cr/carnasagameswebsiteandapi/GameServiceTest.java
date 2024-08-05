@@ -231,4 +231,24 @@ public class GameServiceTest {
         verify(gameRepository, times(1)).save(any(GameModel.class));
         Assertions.assertNotNull(createdGame);
     }
+    @Test
+    void testUpdateGameReturnsNullIfGameDoesNotExist(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
+        GameModel udpatedGame = gameServiceImpl.updateGame(gameModel);
+        Assertions.assertNull(udpatedGame);
+    }
+    @Test
+    void testUpdateGameReturnsGameIfSuccessful(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre("puzzle");
+        gameModel.setCreator(userModel1);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        when(gameRepository.save(any(GameModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        GameModel updatedGame = gameServiceImpl.updateGame(gameModel);
+        verify(gameRepository, times(1)).save(any(GameModel.class));
+        Assertions.assertEquals(updatedGame.getGenre(), gameModel.getGenre());
+    }
 }

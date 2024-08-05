@@ -23,10 +23,9 @@ public class GameServiceImpl implements GameServicable {
 
     @Override
     public GameModel createGame(GameModel game) {
-        if(gameRepository.existsById(game.getId())) {
+        if(gameRepository.findById(game.getId()).isEmpty()){
             return null;
         }
-
         game.setPublished(false);
         game.setTimesPlayed(0);
         return gameRepository.save(game);
@@ -34,8 +33,13 @@ public class GameServiceImpl implements GameServicable {
 
     @Override
     public GameModel updateGame(GameModel game) {
-        return null;
+        if(gameRepository.existsById(game.getId())) {
+            return null;
+        }
+        return gameRepository.save(game);
     }
+
+    //todo update by individual attribute?
 
     @Override
     public GameModel deleteGame(Long gameId) {
