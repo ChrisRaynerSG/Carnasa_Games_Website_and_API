@@ -89,10 +89,8 @@ public class GameServiceImpl implements GameServicable {
 
     @Override
     public List<GameModel> getTopTenGamesByGenre(String genre) {
-        List<GameModel> gamesBeforeSort = getGamesByGenre(genre);
-        List<GameModel> gamesAfterSort = new ArrayList<>();
-        gamesAfterSort = gamesBeforeSort;
-        gamesAfterSort.sort(Comparator.comparingInt(GameModel::getTimesPlayed).reversed());
-        return gamesAfterSort.subList(0, Math.min(gamesAfterSort.size(), 10));
+        List<GameModel> games = new ArrayList<>(getGamesByGenre(genre));
+        games.sort(Comparator.comparingInt(GameModel::getTimesPlayed).reversed());
+        return games.subList(0, Math.min(games.size(), 10));
     }
 }
