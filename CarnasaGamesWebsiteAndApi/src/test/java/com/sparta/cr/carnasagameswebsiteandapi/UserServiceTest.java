@@ -203,4 +203,18 @@ public class UserServiceTest {
         UserModel deletedUser = userServiceImpl.deleteUser(user.getId());
         Assertions.assertEquals(deletedUser.getId(), user1.getId());
     }
+    @Test
+    void getUsersByNameReturnsUsersWithName(){
+        int expected = 1;
+        when(userRepository.findAll()).thenReturn(users);
+        int actual = userServiceImpl.getUsersByName("adm").size();
+        Assertions.assertEquals(expected, actual);
+    }
+    @Test
+    void getUsersByNameReturnsEmptyListIfNoUsersFound(){
+        int expected = 0;
+        when(userRepository.findAll()).thenReturn(users);
+        int actual = userServiceImpl.getUsersByName("jerry").size();
+        Assertions.assertEquals(expected, actual);
+    }
 }
