@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -80,11 +82,17 @@ public class GameServiceImpl implements GameServicable {
 
     @Override
     public List<GameModel> getTopTenGames() {
-        return List.of();
+        List<GameModel> games = getAllGames();
+        games.sort(Comparator.comparingInt(GameModel::getTimesPlayed).reversed());
+        return games.subList(0, Math.min(games.size(), 10));
     }
 
     @Override
     public List<GameModel> getTopTenGamesByGenre(String genre) {
-        return List.of();
+        List<GameModel> gamesBeforeSort = getGamesByGenre(genre);
+        List<GameModel> gamesAfterSort = new ArrayList<>();
+        gamesAfterSort = gamesBeforeSort;
+        gamesAfterSort.sort(Comparator.comparingInt(GameModel::getTimesPlayed).reversed());
+        return gamesAfterSort.subList(0, Math.min(gamesAfterSort.size(), 10));
     }
 }

@@ -83,6 +83,7 @@ public class GameModel {
                 ", creator=" + creator +
                 ", isPublished=" + isPublished +
                 ", genre='" + genre + '\'' +
+                ", timesPlayed=" + timesPlayed +
                 '}';
     }
 }

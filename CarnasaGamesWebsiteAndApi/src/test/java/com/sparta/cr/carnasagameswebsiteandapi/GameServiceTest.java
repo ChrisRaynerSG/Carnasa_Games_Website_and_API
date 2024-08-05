@@ -12,6 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -26,6 +28,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 public class GameServiceTest {
 
+    private static final Logger log = LoggerFactory.getLogger(GameServiceTest.class);
     @Mock
     private GameRepository gameRepository;
 
@@ -39,6 +42,7 @@ public class GameServiceTest {
     private GameServiceImpl gameServiceImpl;
 
     private List<GameModel> gameModelList;
+    private List<GameModel> topScoresList;
     private GameModel gameModel1;
     private GameModel gameModel2;
     private UserModel userModel1;
@@ -53,6 +57,7 @@ public class GameServiceTest {
         userModel2 = new UserModel();
         userModel3 = new UserModel();
         gameModelList = new ArrayList<>();
+        topScoresList = new ArrayList<>();
 
         userModel1.setUsername("admin");
         userModel1.setId(1234L);
@@ -75,11 +80,26 @@ public class GameServiceTest {
         gameModel1.setCreator(userModel1);
         gameModel2.setCreator(userModel3);
 
+        gameModel1.setTimesPlayed(1000);
+        gameModel2.setTimesPlayed(2400);
+
         gameModel1.setTitle("Super Action Game!");
         gameModel2.setTitle("Tricky Puzzle Game!");
 
         gameModelList.add(gameModel1);
         gameModelList.add(gameModel2);
+
+        for(int i =0; i<30; i++){
+            GameModel gameModel = new GameModel();
+            if(i%2==0){
+                gameModel.setGenre("puzzle");
+            }
+            else {
+                gameModel.setGenre("action");
+            }
+            gameModel.setTimesPlayed(i*10);
+            topScoresList.add(gameModel);
+        }
     }
 
     @Test
@@ -147,5 +167,34 @@ public class GameServiceTest {
         int actual = gameServiceImpl.getGamesByCreatorUsername("ad").size();
         Assertions.assertEquals(expected, actual);
     }
-
+    @Test
+    void testGetTopTenGamesByTopClicksReturnsMostPlayedGames(){
+        int expected = 10;
+        when(gameRepository.findAll()).thenReturn(topScoresList);
+        List<GameModel> topGames = gameServiceImpl.getTopTenGames();
+        for(GameModel gameModel : topGames){
+            log.atInfo().log(gameModel.toString());
+        }
+        Assertions.assertEquals(expected, topGames.size());
+    }
+    @Test
+    void testGetTopTenGamesReturnsLessThanTenIfLessThanTenGamesExist(){
+        int expected = 2;
+        when(gameRepository.findAll()).thenReturn(gameModelList);
+        List<GameModel> topGames = gameServiceImpl.getTopTenGames();
+        for(GameModel gameModel : topGames){
+            log.atInfo().log(gameModel.toString());
+        }
+        Assertions.assertEquals(expected, topGames.size());
+    }
+    @Test
+    void testGetTopTenGamesByGenreReturnsMostPlayedGamesOfGenre(){
+        int expected = 10;
+        when(gameRepository.findAll()).thenReturn(topScoresList);
+        List<GameModel> topGames = gameServiceImpl.getTopTenGamesByGenre("action");
+        for(GameModel gameModel : topGames){
+            log.atInfo().log(gameModel.toString());
+        }
+        Assertions.assertEquals(expected, topGames.size());
+    }
 }
