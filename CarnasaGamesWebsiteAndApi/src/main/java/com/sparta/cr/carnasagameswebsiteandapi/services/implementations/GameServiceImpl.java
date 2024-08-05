@@ -4,6 +4,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.GameRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.GameServicable;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,7 +14,9 @@ import java.util.List;
 public class GameServiceImpl implements GameServicable {
 
     private final UserServiceImpl userServiceImpl;
-    private GameRepository gameRepository;
+    private final GameRepository gameRepository;
+
+    @Autowired
     public GameServiceImpl(GameRepository gameRepository, UserServiceImpl userServiceImpl) {
         this.gameRepository = gameRepository;
         this.userServiceImpl = userServiceImpl;

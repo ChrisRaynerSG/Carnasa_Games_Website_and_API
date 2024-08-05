@@ -5,6 +5,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.GameRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
+import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.GameServicable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,10 +15,12 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -27,10 +30,10 @@ public class GameServiceTest {
     private GameRepository gameRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private GameServicable gameServicable;
 
     @Mock
-    private GameServicable gameServicable;
+    private UserServiceImpl userServiceImpl;
 
     @InjectMocks
     private GameServiceImpl gameServiceImpl;
@@ -39,22 +42,38 @@ public class GameServiceTest {
     private GameModel gameModel1;
     private GameModel gameModel2;
     private UserModel userModel1;
+    private UserModel userModel2;
+    private UserModel userModel3;
 
     @BeforeEach
     void setUp() {
         gameModel1 = new GameModel();
         gameModel2 = new GameModel();
-        gameModelList = new LinkedList<>();
+        userModel1 = new UserModel();
+        userModel2 = new UserModel();
+        userModel3 = new UserModel();
+        gameModelList = new ArrayList<>();
 
         userModel1.setUsername("admin");
         userModel1.setId(1234L);
         userModel1.setPassword("admin");
         userModel1.setEmail("admin@admin.com");
 
+        userModel2.setUsername("user");
+        userModel2.setId(2345L);
+        userModel2.setPassword("user");
+        userModel2.setEmail("user@user.com");
+
+        userModel3.setUsername("admoo");
+        userModel3.setId(3456L);
+        userModel3.setPassword("admoo");
+        userModel3.setEmail("user2@user2.com");
+
         gameModel1.setGenre("action");
         gameModel2.setGenre("puzzle");
 
         gameModel1.setCreator(userModel1);
+        gameModel2.setCreator(userModel3);
 
         gameModel1.setTitle("Super Action Game!");
         gameModel2.setTitle("Tricky Puzzle Game!");
@@ -95,9 +114,38 @@ public class GameServiceTest {
     @Test
     void testGetGamesByCreator(){
         int expected = 1;
+
         when(gameRepository.findAll()).thenReturn(gameModelList);
-        when(userRepository.findById(userModel1.getId())).thenReturn(Optional.of(userModel1));
+        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.of(userModel1));
+
         int actual = gameServiceImpl.getGamesByCreatorId(1234L).size();
         Assertions.assertEquals(expected, actual);
     }
+
+    @Test
+    void testGetGamesByCreatorAndNoCreatorMatchReturnsEmptyList(){
+        int expected = 0;
+        when(gameRepository.findAll()).thenReturn(gameModelList);
+        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.empty());
+        int actual = gameServiceImpl.getGamesByCreatorId(1234L).size();
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    void testGetGamesByCreatorNameAndNoCreatorMatchReturnsEmptyList(){
+        int expected = 0;
+        when(gameRepository.findAll()).thenReturn(gameModelList);
+        when(userServiceImpl.getUserByUsername("nobody")).thenReturn(Optional.empty());
+        int actual = gameServiceImpl.getGamesByCreatorUsername("nobody").size();
+        Assertions.assertEquals(expected, actual);
+    }
+    @Test
+    void testGetGamesByCreatorNameAndUserMatchReturnsGamesThatMatch(){
+        int expected = 2;
+        when(gameRepository.findAll()).thenReturn(gameModelList);
+        when(userServiceImpl.getUserByUsername("ad")).thenReturn(Optional.of(userModel1));
+        int actual = gameServiceImpl.getGamesByCreatorUsername("ad").size();
+        Assertions.assertEquals(expected, actual);
+    }
+
 }
