@@ -181,4 +181,26 @@ public class UserServiceTest {
         UserModel updatedUser = userServiceImpl.updateUser(user);
         Assertions.assertTrue(passwordEncoderTest.matches("Password@1", updatedUser.getPassword()));
     }
+    @Test
+    void deleteUserReturnsNullWhenUserIdDoesNotExist(){
+        UserModel user = new UserModel();
+        user.setId(123456);
+        user.setUsername("admin2");
+        user.setPassword("Password@1");
+        user.setEmail("admin2@admin.com");
+        when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
+        UserModel deletedUser = userServiceImpl.deleteUser(user.getId());
+        Assertions.assertNull(deletedUser);
+    }
+    @Test
+    void deleteUserReturnsUserIfUserDoesExist(){
+        UserModel user = new UserModel();
+        user.setId(1234);
+        user.setUsername("admin");
+        user.setPassword("Password@1");
+        user.setEmail("admin@admin.com");
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user1));
+        UserModel deletedUser = userServiceImpl.deleteUser(user.getId());
+        Assertions.assertEquals(deletedUser.getId(), user1.getId());
+    }
 }
