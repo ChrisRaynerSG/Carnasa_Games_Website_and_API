@@ -3,12 +3,12 @@ package com.sparta.cr.carnasagameswebsiteandapi.models;
 import jakarta.persistence.*;
 
 @Entity(name = "games")
-public class GamesModel {
+public class GameModel {
 
     @Id
     @GeneratedValue
     @Column(name = "game_id", nullable = false, updatable = false)
-    private long id;
+    private Long id;
 
     @Column(name = "title")
     private String title;
@@ -18,16 +18,19 @@ public class GamesModel {
     private UserModel creator;
 
     @Column(name = "is_published", nullable = false)
-    private boolean isPublished;
+    private Boolean isPublished;
 
     @Column(name = "genre", nullable = false)
     private String genre;
 
-    public long getId() {
+    @Column(name = "times_played")
+    private Integer timesPlayed;
+
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -47,11 +50,11 @@ public class GamesModel {
         this.creator = creator;
     }
 
-    public boolean isPublished() {
+    public Boolean isPublished() {
         return isPublished;
     }
 
-    public void setPublished(boolean published) {
+    public void setPublished(Boolean published) {
         isPublished = published;
     }
 
@@ -61,6 +64,14 @@ public class GamesModel {
 
     public void setGenre(String genre) {
         this.genre = genre;
+    }
+
+    public Integer getTimesPlayed() {
+        return timesPlayed;
+    }
+
+    public void setTimesPlayed(Integer timesPlayed) {
+        this.timesPlayed = timesPlayed;
     }
 
     @Override

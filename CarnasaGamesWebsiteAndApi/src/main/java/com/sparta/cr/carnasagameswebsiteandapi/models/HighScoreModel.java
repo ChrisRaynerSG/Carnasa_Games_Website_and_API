@@ -10,36 +10,36 @@ public class HighScoreModel {
     @Id
     @GeneratedValue
     @Column(name = "score_id")
-    private long scoreId;
+    private Long scoreId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id")
-    private GamesModel gamesModel;
+    private GameModel gameModel;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserModel userModel;
 
     @Column(name = "score")
-    private long score;
+    private Long score;
 
     @Column(name = "date")
     private Date date;
 
-    public long getScoreId() {
+    public Long getScoreId() {
         return scoreId;
     }
 
-    public void setScoreId(long scoreId) {
+    public void setScoreId(Long scoreId) {
         this.scoreId = scoreId;
     }
 
-    public GamesModel getGamesModel() {
-        return gamesModel;
+    public GameModel getGamesModel() {
+        return gameModel;
     }
 
-    public void setGamesModel(GamesModel gamesModel) {
-        this.gamesModel = gamesModel;
+    public void setGamesModel(GameModel gameModel) {
+        this.gameModel = gameModel;
     }
 
     public UserModel getUserModel() {
@@ -50,11 +50,11 @@ public class HighScoreModel {
         this.userModel = userModel;
     }
 
-    public long getScore() {
+    public Long getScore() {
         return score;
     }
 
-    public void setScore(long score) {
+    public void setScore(Long score) {
         this.score = score;
     }
 
@@ -69,7 +69,7 @@ public class HighScoreModel {
     @Override
     public String toString() {
         return "HighScoreModel{" +
-                "gamesModel=" + gamesModel.getTitle() +
+                "gamesModel=" + gameModel.getTitle() +
                 ", userModel=" + userModel.getUsername() +
                 ", score=" + score +
                 ", date=" + date +
