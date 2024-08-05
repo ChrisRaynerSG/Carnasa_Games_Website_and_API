@@ -30,7 +30,7 @@ public class UserServiceImpl implements UserServiceable {
 
     @Override
     public List<UserModel> getUsersByName(String name) {
-        return List.of();
+        return getAllUsers().stream().filter(userModel -> userModel.getUsername().contains(name)).toList();
     }
 
     @Override
@@ -104,7 +104,9 @@ public class UserServiceImpl implements UserServiceable {
 
     @Override
     public UserModel deleteUser(Long userId) {
-        return null;
+        Optional<UserModel> user = getUser(userId);
+        user.ifPresent(userModel -> userRepository.delete(userModel));
+        return user.orElse(null);
     }
 
     private boolean validatePassword(String password) {

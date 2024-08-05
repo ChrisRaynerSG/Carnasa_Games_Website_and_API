@@ -181,4 +181,40 @@ public class UserServiceTest {
         UserModel updatedUser = userServiceImpl.updateUser(user);
         Assertions.assertTrue(passwordEncoderTest.matches("Password@1", updatedUser.getPassword()));
     }
+    @Test
+    void deleteUserReturnsNullWhenUserIdDoesNotExist(){
+        UserModel user = new UserModel();
+        user.setId(123456);
+        user.setUsername("admin2");
+        user.setPassword("Password@1");
+        user.setEmail("admin2@admin.com");
+        when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
+        UserModel deletedUser = userServiceImpl.deleteUser(user.getId());
+        Assertions.assertNull(deletedUser);
+    }
+    @Test
+    void deleteUserReturnsUserIfUserDoesExist(){
+        UserModel user = new UserModel();
+        user.setId(1234);
+        user.setUsername("admin");
+        user.setPassword("Password@1");
+        user.setEmail("admin@admin.com");
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user1));
+        UserModel deletedUser = userServiceImpl.deleteUser(user.getId());
+        Assertions.assertEquals(deletedUser.getId(), user1.getId());
+    }
+    @Test
+    void getUsersByNameReturnsUsersWithName(){
+        int expected = 1;
+        when(userRepository.findAll()).thenReturn(users);
+        int actual = userServiceImpl.getUsersByName("adm").size();
+        Assertions.assertEquals(expected, actual);
+    }
+    @Test
+    void getUsersByNameReturnsEmptyListIfNoUsersFound(){
+        int expected = 0;
+        when(userRepository.findAll()).thenReturn(users);
+        int actual = userServiceImpl.getUsersByName("jerry").size();
+        Assertions.assertEquals(expected, actual);
+    }
 }
