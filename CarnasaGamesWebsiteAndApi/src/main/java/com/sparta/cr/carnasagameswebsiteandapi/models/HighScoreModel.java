@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 
 import java.util.Date;
 
-@Entity(name="scores")
+@Entity
+@Table(schema = "games_website", name = "high_scores")
 public class HighScoreModel {
 
     @Id

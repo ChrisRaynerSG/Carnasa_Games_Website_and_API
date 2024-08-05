@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 
 import java.util.Date;
 
-@Entity(name = "comments")
+@Entity
+@Table(schema = "games_website", name = "comments")
 public class CommentModel {
 
     @Id

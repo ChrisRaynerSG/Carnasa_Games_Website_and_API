@@ -1,11 +1,11 @@
 package com.sparta.cr.carnasagameswebsiteandapi.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
-@Entity(name = "users")
+
+
+@Entity
+@Table(schema = "games_website", name = "users")
 public class UserModel {
 
     @Id

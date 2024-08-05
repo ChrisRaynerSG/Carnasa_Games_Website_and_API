@@ -2,7 +2,8 @@ package com.sparta.cr.carnasagameswebsiteandapi.models;
 
 import jakarta.persistence.*;
 
-@Entity(name = "games")
+@Entity
+@Table(schema = "games_website", name = "games")
 public class GameModel {
 
     @Id
