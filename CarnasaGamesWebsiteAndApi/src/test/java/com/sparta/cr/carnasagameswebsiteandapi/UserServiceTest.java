@@ -9,13 +9,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class UserServiceTest {
@@ -24,10 +26,13 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private UserServiceable userService;
 
     @Mock
-    private UserServiceable userService;
+    PasswordEncoder passwordEncoder;
+
+    @Autowired
+    PasswordEncoder passwordEncoderTest;
 
     private List<UserModel> users;
 
@@ -58,6 +63,7 @@ public class UserServiceTest {
         user.setId(1234);
         user.setUsername("newUser");
         user.setPassword("Password@1");
+        user.setEmail("newUser@email.com");
         when(userRepository.findAll()).thenReturn(users);
         UserModel actual = userServiceImpl.createUser(user);
         Assertions.assertNull(actual);
@@ -68,6 +74,7 @@ public class UserServiceTest {
         user.setId(123456);
         user.setUsername("admin");
         user.setPassword("Password@1");
+        user.setEmail("newUser@email.com");
         when(userRepository.findAll()).thenReturn(users);
         UserModel actual = userServiceImpl.createUser(user);
         Assertions.assertNull(actual);
@@ -78,6 +85,7 @@ public class UserServiceTest {
         user.setId(123456);
         user.setUsername("admin2");
         user.setPassword("password");
+        user.setEmail("newUser@email.com");
         Assertions.assertNull(userServiceImpl.createUser(user));
     }
     @Test
@@ -106,8 +114,17 @@ public class UserServiceTest {
         user.setUsername("admin2");
         user.setPassword("Password@1");
         user.setEmail("admin2@admin.com");
+
         when(userRepository.findAll()).thenReturn(users);
+        when(passwordEncoder.encode(any(String.class))).thenReturn(passwordEncoderTest.encode(user.getPassword()));
+        when(userRepository.save(any(UserModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
         UserModel createdUser = userServiceImpl.createUser(user);
+
         Assertions.assertNotNull(createdUser);
+        Assertions.assertEquals(user.getId(), createdUser.getId());
+        Assertions.assertEquals(user.getUsername(), createdUser.getUsername());
+        Assertions.assertEquals(user.getEmail(), createdUser.getEmail());
+        verify(userRepository, times(1)).save(user);
     }
 }
