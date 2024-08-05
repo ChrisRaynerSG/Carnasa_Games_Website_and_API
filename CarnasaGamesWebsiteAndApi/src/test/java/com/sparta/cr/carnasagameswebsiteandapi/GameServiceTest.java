@@ -251,4 +251,17 @@ public class GameServiceTest {
         verify(gameRepository, times(1)).save(any(GameModel.class));
         Assertions.assertEquals(updatedGame.getGenre(), gameModel.getGenre());
     }
+    @Test
+    void testDeleteGameReturnsNullIfGameDoesNotExist(){
+        when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
+        GameModel gameModel = gameServiceImpl.deleteGame(1234L);
+        Assertions.assertNull(gameModel);
+    }
+    @Test
+    void testDeleteGameReturnsGameAndDeletesIfGameExists(){
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        GameModel gameModel = gameServiceImpl.deleteGame(1234L);
+        verify(gameRepository, times(1)).delete(gameModel1);
+        Assertions.assertNotNull(gameModel);
+    }
 }

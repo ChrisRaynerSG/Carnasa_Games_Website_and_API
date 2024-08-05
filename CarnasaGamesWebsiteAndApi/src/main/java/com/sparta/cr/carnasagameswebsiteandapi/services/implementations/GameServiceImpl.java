@@ -43,6 +43,11 @@ public class GameServiceImpl implements GameServicable {
 
     @Override
     public GameModel deleteGame(Long gameId) {
+        if(gameRepository.findById(gameId).isPresent()) {
+            GameModel game = gameRepository.findById(gameId).get();
+            gameRepository.delete(game);
+            return game;
+        }
         return null;
     }
 
