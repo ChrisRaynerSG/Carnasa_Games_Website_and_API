@@ -46,13 +46,13 @@ public class UserServiceTest {
     void setUp() {
 
         user1 = new UserModel();
-        user1.setId(1234);
+        user1.setId(1234L);
         user1.setUsername("admin");
         user1.setPassword(passwordEncoderTest.encode("Password@1"));
         user1.setEmail("admin@admin.com");
 
         user2 = new UserModel();
-        user2.setId(5678);
+        user2.setId(5678L);
         user2.setUsername("user");
         user2.setPassword(passwordEncoderTest.encode("Password@1"));
         user2.setEmail("user@user.com");
@@ -65,7 +65,7 @@ public class UserServiceTest {
     @Test
     void createUserReturnsNullWhenUserIdAlreadyExists(){
         UserModel user = new UserModel();
-        user.setId(1234);
+        user.setId(1234L);
         user.setUsername("newUser");
         user.setPassword("Password@1");
         user.setEmail("newUser@email.com");
@@ -76,7 +76,7 @@ public class UserServiceTest {
     @Test
     void createUserReturnsNullWhenUserNameAlreadyExists(){
         UserModel user = new UserModel();
-        user.setId(123456);
+        user.setId(123456L);
         user.setUsername("admin");
         user.setPassword("Password@1");
         user.setEmail("newUser@email.com");
@@ -87,7 +87,7 @@ public class UserServiceTest {
     @Test
     void createNewUserReturnsNullWhenPasswordIsInvalid(){
         UserModel user = new UserModel();
-        user.setId(123456);
+        user.setId(123456L);
         user.setUsername("admin2");
         user.setPassword("password");
         user.setEmail("newUser@email.com");
@@ -96,7 +96,7 @@ public class UserServiceTest {
     @Test
     void createNewUserReturnsNullIfEmailIsInvalid(){
         UserModel user = new UserModel();
-        user.setId(123456);
+        user.setId(123456L);
         user.setUsername("admin2");
         user.setPassword("Password@1");
         user.setEmail("invalid");
@@ -105,7 +105,7 @@ public class UserServiceTest {
     @Test
     void createNewUserReturnsNullIfEmailAlreadyExists(){
         UserModel user = new UserModel();
-        user.setId(123456);
+        user.setId(123456L);
         user.setUsername("admin2");
         user.setPassword("Password@1");
         user.setEmail("admin@admin.com");
@@ -115,7 +115,7 @@ public class UserServiceTest {
     @Test
     void createNewUserReturnsUserIfSuccessfullyCreated(){
         UserModel user = new UserModel();
-        user.setId(123456);
+        user.setId(123456L);
         user.setUsername("admin2");
         user.setPassword("Password@1");
         user.setEmail("admin2@admin.com");
@@ -136,7 +136,7 @@ public class UserServiceTest {
     @Test
     void updateUserReturnsNullWhenUserIdDoesNotExist(){
         UserModel user = new UserModel();
-        user.setId(123456);
+        user.setId(123456L);
         user.setUsername("admin2");
         user.setPassword("Password@1");
         user.setEmail("admin2@admin.com");
@@ -148,7 +148,7 @@ public class UserServiceTest {
     @Test
     void updateUserReturnsNullIfNewPasswordIsInvalid(){
         UserModel user = new UserModel();
-        user.setId(1234);
+        user.setId(1234L);
         user.setUsername("admin");
         user.setPassword("password");
         user.setEmail("admin@admin.com");
@@ -160,7 +160,7 @@ public class UserServiceTest {
     @Test
     void updateUserReturnsNullIfNewEmailIsInvalid(){
         UserModel user = new UserModel();
-        user.setId(1234);
+        user.setId(1234L);
         user.setUsername("admin");
         user.setPassword(user1.getPassword());
         user.setEmail("admin@admin");
@@ -171,7 +171,7 @@ public class UserServiceTest {
     @Test
     void updateUserReturnsCorrectUserIfSuccessfullyUpdatedPassword(){
         UserModel user = new UserModel();
-        user.setId(1234);
+        user.setId(1234L);
         user.setUsername("admin");
         user.setPassword("Password@1");
         user.setEmail("admin@admin.com");
@@ -184,7 +184,7 @@ public class UserServiceTest {
     @Test
     void deleteUserReturnsNullWhenUserIdDoesNotExist(){
         UserModel user = new UserModel();
-        user.setId(123456);
+        user.setId(123456L);
         user.setUsername("admin2");
         user.setPassword("Password@1");
         user.setEmail("admin2@admin.com");
@@ -195,7 +195,7 @@ public class UserServiceTest {
     @Test
     void deleteUserReturnsUserIfUserDoesExist(){
         UserModel user = new UserModel();
-        user.setId(1234);
+        user.setId(1234L);
         user.setUsername("admin");
         user.setPassword("Password@1");
         user.setEmail("admin@admin.com");

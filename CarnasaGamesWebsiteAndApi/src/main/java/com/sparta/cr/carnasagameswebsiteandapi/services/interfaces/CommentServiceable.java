@@ -4,13 +4,14 @@ import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 public interface CommentServiceable {
 
     CommentModel createComment(CommentModel comment);
     CommentModel updateComment(CommentModel comment);
     CommentModel deleteComment(Long commentId);
-    CommentModel getComment(Long commentId);
+    Optional<CommentModel> getComment(Long commentId);
 
     List<CommentModel> getAllComments();
     List<CommentModel> getCommentsByUser(Long userId);
