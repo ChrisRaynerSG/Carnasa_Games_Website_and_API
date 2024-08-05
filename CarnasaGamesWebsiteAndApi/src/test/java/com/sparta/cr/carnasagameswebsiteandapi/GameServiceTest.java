@@ -22,8 +22,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class GameServiceTest {
@@ -196,5 +197,38 @@ public class GameServiceTest {
             log.atInfo().log(gameModel.toString());
         }
         Assertions.assertEquals(expected, topGames.size());
+    }
+    @Test
+    void testWhenGetGameReturnGameIfGameExists(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel));
+        Assertions.assertNotNull(gameServiceImpl.getGame(1234L));
+    }
+    @Test
+    void testWhenGetGameReturnEmptyOptionalIfGameDoesNotExist(){
+        when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
+        Optional<GameModel> gameOptional = gameServiceImpl.getGame(1234L);
+        Assertions.assertTrue(gameOptional.isEmpty());
+    }
+    @Test
+    void testCreateNewGameReturnsNullIfGameAlreadyExists(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        GameModel createdGame = gameServiceImpl.createGame(gameModel);
+        Assertions.assertNull(createdGame);
+    }
+    @Test
+    void testCreateNewGameReturnsGameIfSuccessful(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre("action");
+        gameModel.setCreator(userModel1);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
+        when(gameRepository.save(any(GameModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        GameModel createdGame = gameServiceImpl.createGame(gameModel);
+        verify(gameRepository, times(1)).save(any(GameModel.class));
+        Assertions.assertNotNull(createdGame);
     }
 }

@@ -7,10 +7,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class GameServiceImpl implements GameServicable {
@@ -26,7 +23,13 @@ public class GameServiceImpl implements GameServicable {
 
     @Override
     public GameModel createGame(GameModel game) {
-        return null;
+        if(gameRepository.existsById(game.getId())) {
+            return null;
+        }
+
+        game.setPublished(false);
+        game.setTimesPlayed(0);
+        return gameRepository.save(game);
     }
 
     @Override
@@ -40,8 +43,8 @@ public class GameServiceImpl implements GameServicable {
     }
 
     @Override
-    public GameModel getGame(Long gameId) {
-        return null;
+    public Optional<GameModel> getGame(Long gameId) {
+        return gameRepository.findById(gameId);
     }
 
     @Override
