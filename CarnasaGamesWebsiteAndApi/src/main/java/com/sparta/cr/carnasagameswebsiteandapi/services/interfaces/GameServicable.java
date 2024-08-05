@@ -15,7 +15,8 @@ public interface GameServicable {
     List<GameModel> getGamesByGenre(String genre);
     List<GameModel> getGamesByTitle(String title);
     List<GameModel> getGamesByTitleAndGenre(String title, String genre);
-    List<GameModel> getGamesByCreator(String creator);
+    List<GameModel> getGamesByCreatorId(Long creatorId);
+    List<GameModel> getGamesByCreatorUsername(String creatorName);
     List<GameModel> getTopTenGames();
     List<GameModel> getTopTenGamesByGenre(String genre);
 
