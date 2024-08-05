@@ -11,7 +11,7 @@ public class GameModel {
     @Column(name = "game_id", nullable = false, updatable = false)
     private Long id;
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false)
     private String title;
 
     @JoinColumn(name = "creator", nullable = false)
@@ -83,6 +83,7 @@ public class GameModel {
                 ", creator=" + creator +
                 ", isPublished=" + isPublished +
                 ", genre='" + genre + '\'' +
+                ", timesPlayed=" + timesPlayed +
                 '}';
     }
 }
