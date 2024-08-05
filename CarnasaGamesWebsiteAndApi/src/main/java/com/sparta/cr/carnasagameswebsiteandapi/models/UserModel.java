@@ -86,4 +86,12 @@ public class UserModel {
     public void setPrivate(boolean aPrivate) {
         isPrivate = aPrivate;
     }
+
+    @Override
+    public String toString() {
+        return "UserModel{" +
+                "email='" + email + '\'' +
+                ", username='" + username + '\'' +
+                '}';
+    }
 }
