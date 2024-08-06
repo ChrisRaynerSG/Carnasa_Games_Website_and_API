@@ -53,6 +53,9 @@ public class GameController {
 
     @PostMapping("/new")
     public ResponseEntity<EntityModel<GameModel>> createGame(@RequestBody GameModel gameModel){
+        if(!gameService.validateNewGame(gameModel)){
+            return ResponseEntity.badRequest().build();
+        }
         GameModel newGame = gameService.createGame(gameModel);
         URI location = URI.create("/api/games/search/id/"+newGame.getId());
         Link selfLink = WebMvcLinkBuilder.linkTo(methodOn(GameController.class).getGameById(newGame.getId())).withSelfRel();
