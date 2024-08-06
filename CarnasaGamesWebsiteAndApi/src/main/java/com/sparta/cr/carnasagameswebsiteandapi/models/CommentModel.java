@@ -16,12 +16,12 @@ public class CommentModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id")
-    @JsonBackReference
+    @JsonBackReference(value = "game")
     private GameModel gameModel;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    @JsonBackReference
+    @JsonBackReference(value = "user")
     private UserModel userModel;
 
     @Column(name = "comment_text")
