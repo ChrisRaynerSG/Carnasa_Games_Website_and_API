@@ -8,7 +8,8 @@ import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.HighScoreServ
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
 
 @Service
 public class HighScoreServiceImpl implements HighScoreServiceable{
@@ -36,37 +37,68 @@ public class HighScoreServiceImpl implements HighScoreServiceable{
     }
 
     @Override
-    public HighScoreModel getHighScore(Long scoreId) {
-        return null;
+    public Optional<HighScoreModel> getHighScore(Long scoreId) {
+        return highScoreRepository.findById(scoreId);
     }
 
     @Override
     public List<HighScoreModel> getAllHighScores() {
-        return List.of();
+        return highScoreRepository.findAll();
     }
 
     @Override
-    public List<HighScoreModel> getHighScoresByUser(UserModel user) {
-        return List.of();
+    public List<HighScoreModel> getHighScoresByUser(Long userId) {
+        return highScoreRepository.findAll()
+                .stream()
+                .filter(highScoreModel -> highScoreModel.getUserModel().getId().equals(userId))
+                .toList();
     }
 
     @Override
-    public List<HighScoreModel> getHighScoresByGame(GameModel game) {
-        return List.of();
+    public List<HighScoreModel> getHighScoresByGame(Long gameId) {
+        return highScoreRepository.findAll()
+                .stream()
+                .filter(highScoreModel -> highScoreModel.getGamesModel().getId().equals(gameId))
+                .toList();
     }
 
     @Override
-    public List<HighScoreModel> getHighScoresByGameAndUser(GameModel game, UserModel user) {
-        return List.of();
+    public List<HighScoreModel> getHighScoresByGameAndUser(Long userId, Long gameId) {
+        return getHighScoresByGame(gameId)
+                .stream()
+                .filter(highScoreModel -> highScoreModel
+                        .getUserModel()
+                        .getId()
+                        .equals(userId))
+                .toList();
     }
 
     @Override
-    public List<HighScoreModel> getTop10HighScoresByGame(GameModel game) {
-        return List.of();
+    public List<HighScoreModel> getTop10HighScoresByGame(Long gameId) {
+        List<HighScoreModel> highScores = new ArrayList<>(getHighScoresByGame(gameId));
+        highScores.sort(Comparator.comparingLong(HighScoreModel::getScore).reversed());
+        return highScores.subList(0, Math.min(highScores.size(), 10));
     }
 
     @Override
-    public List<HighScoreModel> getTop10HighScoresByUser(UserModel user) {
-        return List.of();
+    public List<HighScoreModel> getTop10HighScoresByUser(Long userId) {
+        List<HighScoreModel> highScores = new ArrayList<>(getHighScoresByUser(userId));
+        highScores.sort(Comparator.comparingLong(HighScoreModel::getScore).reversed());
+        return highScores.subList(0, Math.min(highScores.size(), 10));
+    }
+
+    @Override
+    public List<HighScoreModel> getTop10HighScoresToday(Long gameId, LocalDate today) {
+        List<HighScoreModel> highScores = new ArrayList<>(getHighScoresToday(gameId, today));
+        highScores.sort(Comparator.comparingLong(HighScoreModel::getScore).reversed());
+        return highScores.subList(0, Math.min(highScores.size(), 10));
+    }
+    public List<HighScoreModel> getHighScoresToday(Long gameId, LocalDate today) {
+        return getHighScoresByGame(gameId)
+                .stream()
+                .filter(highScoreModel -> highScoreModel
+                        .getDate()
+                        .equals(today))
+                .toList();
     }
 }
