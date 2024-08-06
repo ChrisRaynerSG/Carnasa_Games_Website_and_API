@@ -3,6 +3,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.UserServiceable;
 import jakarta.persistence.Id;
+import org.springdoc.core.converters.AdditionalModelsConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -62,23 +63,9 @@ public class UserServiceImpl implements UserServiceable {
 
     @Override
     public UserModel createUser(UserModel user) {
-
-        if(getUser(user.getId()).isPresent()){
-            //user already exists exception
+        if(!validateNewUser(user)){
             return null;
         }
-        if(getUserByUsername(user.getUsername()).isPresent()){
-            //username already taken exception
-            return null;
-        }
-        if(!validateUserDetails(user)){
-            return null;
-        }
-        if (getUserByEmail(user.getEmail()).isPresent()){
-            //email already exists exception
-            return null;
-        }
-
         return userRepository.save(encryptPassword(user));
     }
 
@@ -109,11 +96,46 @@ public class UserServiceImpl implements UserServiceable {
         return user.orElse(null);
     }
 
+    public boolean validateNewUser(UserModel user){
+        if(getUser(user.getId()).isPresent()){
+            //user already exists exception
+            return false;
+        }
+        else if(!validateUsername(user.getUsername())){
+            //invalid username exception
+            return false;
+        }
+        else if(!usernameExists(user)){
+            //username exists exception
+            return false;
+        }
+        else if(!validateEmail(user.getEmail())){
+            //validate email exception
+            return false;
+        } else if (!emailExists(user)) {
+            //email exists exception
+            return false;
+        } else if(!validatePassword(user.getPassword())){
+            // validate password exception
+            return false;
+        }
+        return true;
+    }
+
     private boolean validatePassword(String password) {
         return password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
     }
+    private boolean usernameExists(UserModel user) {
+        return getUserByUsername(user.getUsername()).isEmpty();
+    }
+    private boolean validateUsername(String username) {
+        return username.matches("[a-zA-Z0-9_-]{3,20}$");
+    }
     private boolean validateEmail(String email) {
         return email.matches("^([a-zA-Z0-9_\\-.]+)@([a-zA-Z0-9_\\-.]+)\\.([a-zA-Z]{2,5})$");
+    }
+    private boolean emailExists(UserModel user) {
+        return getUserByEmail(user.getEmail()).isEmpty();
     }
     private boolean validateUserDetails(UserModel user) {
         return validateEmail(user.getEmail()) && validatePassword(user.getPassword());

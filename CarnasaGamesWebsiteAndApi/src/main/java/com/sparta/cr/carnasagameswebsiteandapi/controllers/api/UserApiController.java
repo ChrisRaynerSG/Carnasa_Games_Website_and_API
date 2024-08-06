@@ -12,11 +12,9 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -51,6 +49,17 @@ public class UserApiController {
         }
         UserModel userModel = userService.getUser(userId).get();
         return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
+    }
+
+    @PostMapping("/new")
+    public ResponseEntity<EntityModel<UserModel>> createUser(@RequestBody UserModel userModel) {
+        if(!userService.validateNewUser(userModel)){
+            return ResponseEntity.badRequest().build();
+        }
+        UserModel newUser = userService.createUser(userModel);
+        URI location = URI.create("/api/users/search/"+newUser.getId());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(newUser.getId())).withSelfRel();
+        return ResponseEntity.created(location).body(EntityModel.of(newUser).add(selfLink));
     }
 
     private List<Link> getCommentsLinks(UserModel user) {
