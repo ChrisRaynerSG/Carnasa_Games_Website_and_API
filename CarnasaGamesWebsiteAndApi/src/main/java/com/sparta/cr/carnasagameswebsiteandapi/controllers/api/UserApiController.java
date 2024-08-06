@@ -23,19 +23,17 @@ import java.util.List;
 @RequestMapping("/api/users")
 public class UserApiController {
 
-    private final CommentServiceImpl commentServiceImpl;
+    private final CommentServiceImpl commentService;
     private final UserServiceImpl userService;
-    private final UserServiceImpl userServiceImpl;
-    private final GameServiceImpl gameServiceImpl;
-    private final HighScoreServiceImpl highScoreServiceImpl;
+    private final GameServiceImpl gameService;
+    private final HighScoreServiceImpl highScoreService;
 
     @Autowired
-    public UserApiController(UserServiceImpl userService, CommentServiceImpl commentServiceImpl, UserServiceImpl userServiceImpl, GameServiceImpl gameServiceImpl, HighScoreServiceImpl highScoreServiceImpl) {
+    public UserApiController(UserServiceImpl userService, CommentServiceImpl commentService, GameServiceImpl gameService, HighScoreServiceImpl highScoreService) {
         this.userService = userService;
-        this.commentServiceImpl = commentServiceImpl;
-        this.userServiceImpl = userServiceImpl;
-        this.gameServiceImpl = gameServiceImpl;
-        this.highScoreServiceImpl = highScoreServiceImpl;
+        this.commentService = commentService;
+        this.gameService = gameService;
+        this.highScoreService = highScoreService;
     }
 
     @GetMapping("/search/all")
@@ -52,57 +50,43 @@ public class UserApiController {
             return ResponseEntity.notFound().build();
         }
         UserModel userModel = userService.getUser(userId).get();
-        EntityModel<UserModel> userEntityModel = EntityModel.of(userModel,
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userId)).withSelfRel(),
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers()).withRel("All Users")
-        );
-        return new ResponseEntity<>(userEntityModel
-                .add(getCommentsLinks(userModel))
-                .add(getGamesLinks(userModel))
-                .add(getScoresLinks(userModel))
-                ,HttpStatus.OK);
+        return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
     }
 
     private List<Link> getCommentsLinks(UserModel user) {
-        return commentServiceImpl
+        return commentService
                 .getCommentsByUser(user.getId())
                 .stream()
                 .map(comment ->
                         WebMvcLinkBuilder
-                        .linkTo(WebMvcLinkBuilder.methodOn(CommentController.class).getComment(comment.getId()))
+                        .linkTo(WebMvcLinkBuilder.methodOn(CommentController.class).getCommentById(comment.getId()))
                         .withRel(comment.getId().toString()))
                 .toList();
     }
 
     private List<Link> getGamesLinks(UserModel user) {
-        return gameServiceImpl
+        return gameService
                 .getGamesByCreatorId(user.getId())
                 .stream()
                 .map(game ->
                         WebMvcLinkBuilder
-                                .linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getGame(game.getId()))
+                                .linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getGameById(game.getId()))
                                 .withRel(game.getId().toString()))
                 .toList();
     }
 
     private List<Link> getScoresLinks(UserModel user) {
-        return highScoreServiceImpl.getHighScoresByUser(user.getId())
+        return highScoreService.getHighScoresByUser(user.getId())
                 .stream()
                 .map(score ->
                         WebMvcLinkBuilder
-                                .linkTo(WebMvcLinkBuilder.methodOn(HighScoreController.class).getScore(score.getScoreId()))
-                                .withRel(score.getScoreId().toString()))
+                                .linkTo(WebMvcLinkBuilder.methodOn(HighScoreController.class).getScoreById(score.getScoreId()))
+                                .withRel("Score: " + score.getScore() + " Game: " + score.getGamesModel().getTitle()))
                 .toList();
     }
 
     private EntityModel<UserModel> getUserEntityModel(UserModel userModel) {
-
-        List<Link> commentsLinks = getCommentsLinks(userModel);
-        List<Link> gamesLinks = getGamesLinks(userModel);
-        List<Link> scoresLinks = getScoresLinks(userModel);
-
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userModel.getId())).withSelfRel();
-        Link relink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers()).withRel("All Users");
-        return EntityModel.of(userModel, selfLink, relink).add(commentsLinks).add(gamesLinks).add(scoresLinks);
+        return EntityModel.of(userModel, selfLink).add(getCommentsLinks(userModel)).add(getGamesLinks(userModel)).add(getScoresLinks(userModel));
     }
 }
