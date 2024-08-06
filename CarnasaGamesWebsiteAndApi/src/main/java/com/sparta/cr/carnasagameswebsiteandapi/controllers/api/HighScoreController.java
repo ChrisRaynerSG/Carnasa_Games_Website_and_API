@@ -1,7 +1,10 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.HighScoreModel;
+import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.HighScoreServiceImpl;
+import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -9,22 +12,25 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/scores")
 public class HighScoreController {
 
-    private HighScoreServiceImpl highScoreService;
+    private final HighScoreServiceImpl highScoreService;
+    private final GameServiceImpl gameService;
+    private final UserServiceImpl userService;
 
     @Autowired
-    public HighScoreController(HighScoreServiceImpl highScoreService){
+    public HighScoreController(HighScoreServiceImpl highScoreService, GameServiceImpl gameService, UserServiceImpl userService){
         this.highScoreService = highScoreService;
+        this.gameService = gameService;
+        this.userService = userService;
     }
 
     @GetMapping("/search/all")
@@ -33,8 +39,6 @@ public class HighScoreController {
         return new ResponseEntity<>(CollectionModel.of(highScores).add(
                 WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreController.class).getAllHighScores()).withSelfRel()
         ), HttpStatus.OK);
-
-
     }
 
     @GetMapping("/search/{scoreId}")
@@ -46,6 +50,95 @@ public class HighScoreController {
         return ResponseEntity.ok(getHighScoreEntityModel(highScoreModel).add(
                 WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreController.class).getAllHighScores()).withRel("All Scores")
         ));
+    }
+
+    @GetMapping("/search/games/{gameId}")
+    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByGameId(@PathVariable Long gameId){
+        if(gameService.getGame(gameId).isEmpty()){
+            throw new CommentNotFoundException("Game with id " + gameId + " does not exist");
+        }
+        List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByGame(gameId).stream().map(this::getHighScoreEntityModel).toList();
+        if(highScores.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(CollectionModel.of(highScores));
+    }
+    @GetMapping("/search/users/{userId}")
+    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByUserId(@PathVariable Long userId){
+        if(userService.getUser(userId).isEmpty()){
+            throw new CommentNotFoundException("User with id " + userId + " does not exist");
+        }
+        List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByUser(userId).stream().map(this::getHighScoreEntityModel).toList();
+        if(highScores.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(CollectionModel.of(highScores));
+    }
+    @GetMapping("/search/games/{gameId}/top10")
+    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getTop10HighScoresForGame(@PathVariable Long gameId){
+        if(gameService.getGame(gameId).isEmpty()){
+            throw new CommentNotFoundException("Game with id " + gameId + " does not exist");
+        }
+        List<EntityModel<HighScoreModel>> highScores = highScoreService.getTop10HighScoresByGame(gameId).stream().map(this::getHighScoreEntityModel).toList();
+        if(highScores.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(CollectionModel.of(highScores));
+    }
+    @GetMapping("/search/games/{gameId}/top10today")
+    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getTop10HighScoresForGameToday(@PathVariable Long gameId){
+        if(gameService.getGame(gameId).isEmpty()){
+            throw new CommentNotFoundException("Game with id " + gameId + " does not exist");
+        }
+        List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresToday(gameId, LocalDate.now()).stream().map(this::getHighScoreEntityModel).toList();
+        if(highScores.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(CollectionModel.of(highScores));
+    }
+    @GetMapping("/search/games/{gameId}/users/{userId}")
+    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByUserIdForGame(@PathVariable Long gameId, @PathVariable Long userId){
+        if(gameService.getGame(gameId).isEmpty()){
+            throw new CommentNotFoundException("Game with id " + gameId + " does not exist");
+        }
+        if(userService.getUser(userId).isEmpty()){
+            throw new CommentNotFoundException("User with id " + userId + " does not exist");
+        }
+        List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByGameAndUser(userId, gameId).stream().map(this::getHighScoreEntityModel).toList();
+        if(highScores.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(CollectionModel.of(highScores));
+    }
+
+    @PostMapping("/new")
+    public ResponseEntity<EntityModel<HighScoreModel>> createHighScore(@RequestBody HighScoreModel highScoreModel){
+        highScoreService.validateNewHighScore(highScoreModel);
+        HighScoreModel newHighScore = highScoreService.createHighScore(highScoreModel);
+        URI location = URI.create("/api/scores/search/" + newHighScore.getScoreId());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreController.class).getAllHighScores()).withSelfRel();
+        return ResponseEntity.created(location).body(EntityModel.of(newHighScore).add(selfLink));
+    }
+    @PutMapping("/update/{scoreId}")
+    public ResponseEntity<EntityModel<HighScoreModel>> updateHighScore(@PathVariable Long scoreId, @RequestBody HighScoreModel highScoreModel){
+        if(highScoreService.getHighScore(scoreId).isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+        if(!highScoreModel.getScoreId().equals(scoreId)){
+            return ResponseEntity.badRequest().build();
+        }
+        highScoreService.validateExistingHighScore(highScoreModel);
+        highScoreService.updateHighScore(highScoreModel);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/delete/{scoreId}")
+    public ResponseEntity<EntityModel<HighScoreModel>> deleteHighScore(@PathVariable Long scoreId){
+        if(highScoreService.getHighScore(scoreId).isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+        highScoreService.deleteHighScore(scoreId);
+        return ResponseEntity.noContent().build();
     }
 
     private Link getUserLink(HighScoreModel highScoreModel){

@@ -1,5 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoGameException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.HighScoreModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
@@ -14,28 +16,37 @@ import java.util.*;
 @Service
 public class HighScoreServiceImpl implements HighScoreServiceable{
 
-    private HighScoreRepository highScoreRepository;
+    private final HighScoreRepository highScoreRepository;
+    private final UserServiceImpl userService;
+    private final GameServiceImpl gameService;
 
     @Autowired
-    public HighScoreServiceImpl(HighScoreRepository highScoreRepository) {
+    public HighScoreServiceImpl(HighScoreRepository highScoreRepository, UserServiceImpl userService, GameServiceImpl gameService) {
         this.highScoreRepository = highScoreRepository;
+        this.userService = userService;
+        this.gameService = gameService;
     }
 
     @Override
     public HighScoreModel createHighScore(HighScoreModel highScoreModel) {
-        if(getHighScore(highScoreModel.getScoreId()).isPresent()){
-            return null;
+        if(validateNewHighScore(highScoreModel)) {
+            highScoreModel.setUserModel(userService.getUser(highScoreModel.getUserModel().getId()).get());
+            highScoreModel.setGamesModel(gameService.getGame(highScoreModel.getGamesModel().getId()).get());
+            highScoreModel.setDate(LocalDate.now());
+            return highScoreRepository.save(highScoreModel);
         }
-        highScoreModel.setDate(LocalDate.now());
-        return highScoreRepository.save(highScoreModel);
+        return null;
     }
-
     @Override
     public HighScoreModel updateHighScore(HighScoreModel highScoreModel) {
-        if(getHighScore(highScoreModel.getScoreId()).isEmpty()){
-            return null;
+        if(validateExistingHighScore(highScoreModel)) {
+            HighScoreModel beforeUpdate = getHighScore(highScoreModel.getScoreId()).get();
+            highScoreModel.setDate(beforeUpdate.getDate());
+            highScoreModel.setUserModel(userService.getUser(highScoreModel.getUserModel().getId()).get());
+            highScoreModel.setGamesModel(gameService.getGame(highScoreModel.getGamesModel().getId()).get());
+            return highScoreRepository.save(highScoreModel);
         }
-        return highScoreRepository.save(highScoreModel);
+        return null;
     }
 
     @Override
@@ -113,5 +124,38 @@ public class HighScoreServiceImpl implements HighScoreServiceable{
                         .getDate()
                         .equals(today))
                 .toList();
+    }
+
+    public boolean validateNewHighScore(HighScoreModel highScoreModel) {
+        if(getHighScore(highScoreModel.getScoreId()).isPresent()){
+            return false; //HighScoreAlreadyExists
+        }
+        if(userService.getUser(highScoreModel.getUserModel().getId()).isEmpty()){
+            throw new NoUserException("Cannot create comment as user with ID: " + highScoreModel.getUserModel().getId()+" does not exist." );
+        }
+        if(gameService.getGame(highScoreModel.getGamesModel().getId()).isEmpty()){
+            throw new NoGameException("Cannot create comment as game with ID: " + highScoreModel.getGamesModel().getId() + " does not exist." );
+        }
+        if(highScoreModel.getScore()>=Long.MAX_VALUE || highScoreModel.getScore()<=Long.MIN_VALUE){
+            return false; //outOfBoundsException
+        }
+        return true;
+    }
+
+    public boolean validateExistingHighScore(HighScoreModel highScoreModel) {
+        if(getHighScore(highScoreModel.getScoreId()).isEmpty()){
+            return false; //HighScoreDoesntExist
+        }
+        HighScoreModel beforeUpdate = getHighScore(highScoreModel.getScoreId()).get();
+        if(!beforeUpdate.getUserModel().getId().equals(highScoreModel.getUserModel().getId())){
+            throw new NoUserException("Cannot update HighScore as new user ID detected");
+        }
+        if(!beforeUpdate.getGamesModel().getId().equals(highScoreModel.getGamesModel().getId())){
+            throw new NoGameException("Cannot update HighScore as new game ID detected");
+        }
+        if(highScoreModel.getScore()>=Long.MAX_VALUE || highScoreModel.getScore()<=Long.MIN_VALUE){
+            return false; //outOfBoundsException
+        }
+        return true;
     }
 }
