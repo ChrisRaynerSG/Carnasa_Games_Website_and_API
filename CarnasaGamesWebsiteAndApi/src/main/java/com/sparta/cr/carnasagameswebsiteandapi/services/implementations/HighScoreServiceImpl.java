@@ -22,17 +22,29 @@ public class HighScoreServiceImpl implements HighScoreServiceable{
     }
 
     @Override
-    public HighScoreModel createHighScore(UserModel user, GameModel game) {
-        return null;
+    public HighScoreModel createHighScore(HighScoreModel highScoreModel) {
+        if(getHighScore(highScoreModel.getScoreId()).isPresent()){
+            return null;
+        }
+        highScoreModel.setDate(LocalDate.now());
+        return highScoreRepository.save(highScoreModel);
     }
 
     @Override
-    public HighScoreModel updateHighScore(UserModel user, GameModel game) {
-        return null;
+    public HighScoreModel updateHighScore(HighScoreModel highScoreModel) {
+        if(getHighScore(highScoreModel.getScoreId()).isEmpty()){
+            return null;
+        }
+        return highScoreRepository.save(highScoreModel);
     }
 
     @Override
     public HighScoreModel deleteHighScore(Long scoreId) {
+        if(getHighScore(scoreId).isPresent()){
+            HighScoreModel highScoreModel = getHighScore(scoreId).get();
+            highScoreRepository.delete(highScoreModel);
+            return highScoreModel;
+        }
         return null;
     }
 
@@ -93,6 +105,7 @@ public class HighScoreServiceImpl implements HighScoreServiceable{
         highScores.sort(Comparator.comparingLong(HighScoreModel::getScore).reversed());
         return highScores.subList(0, Math.min(highScores.size(), 10));
     }
+    @Override
     public List<HighScoreModel> getHighScoresToday(Long gameId, LocalDate today) {
         return getHighScoresByGame(gameId)
                 .stream()
