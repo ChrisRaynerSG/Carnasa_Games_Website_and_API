@@ -74,5 +74,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNoUserException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(UsernameNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<ErrorResponse> handleUsernameNotFoundException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("NOT_FOUND", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.NOT_FOUND);
+    }
+    @ExceptionHandler(UserNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<ErrorResponse> handleUserNotFoundException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("NOT_FOUND", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.NOT_FOUND);
+    }
     private record ErrorResponse(Object errorDetails, String errorCode, String url){}
 }

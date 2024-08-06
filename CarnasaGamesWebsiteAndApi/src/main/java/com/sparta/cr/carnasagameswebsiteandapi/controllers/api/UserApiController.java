@@ -1,5 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UsernameNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.CommentServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
@@ -45,7 +47,7 @@ public class UserApiController {
     @GetMapping("/search/id/{userId}")
     public ResponseEntity<EntityModel<UserModel>> getUserById(@PathVariable Long userId) {
         if(userService.getUser(userId).isEmpty()) {
-            return ResponseEntity.notFound().build();
+            throw new UserNotFoundException(userId.toString());
         }
         UserModel userModel = userService.getUser(userId).get();
         return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
@@ -54,7 +56,7 @@ public class UserApiController {
     @GetMapping("/search/name/{username}")
     public ResponseEntity<EntityModel<UserModel>> getUserByName(@PathVariable String username) {
         if(userService.getUserByUsername(username).isEmpty()) {
-            return ResponseEntity.notFound().build();
+            throw new UsernameNotFoundException(username);
         }
         UserModel userModel = userService.getUserByUsername(username).get();
         return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
@@ -74,7 +76,7 @@ public class UserApiController {
     @PutMapping("/update/{userId}")
     public ResponseEntity<EntityModel<UserModel>> updateUser(@PathVariable Long userId, @RequestBody UserModel userModel) {
         if(userService.getUser(userId).isEmpty()) {
-            return ResponseEntity.notFound().build();
+            throw new UserNotFoundException(userId.toString());
         }
         if(!userModel.getId().equals(userId)) {
             return ResponseEntity.badRequest().build();
@@ -113,7 +115,7 @@ public class UserApiController {
                 .map(game ->
                         WebMvcLinkBuilder
                                 .linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getGameById(game.getId()))
-                                .withRel(game.getId().toString()))
+                                .withRel("Game: " + game.getTitle()))
                 .toList();
     }
 

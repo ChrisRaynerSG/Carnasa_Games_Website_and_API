@@ -85,7 +85,6 @@ public class GameServiceImpl implements GameServicable {
     @Transactional
     public List<GameModel> getGamesByCreatorId(Long creatorId) {
         if(userServiceImpl.getUser(creatorId).isEmpty()){
-            //user id not found exception
             return new ArrayList<>();
         }
         return getAllGames().stream().filter(gameModel -> Objects.equals(gameModel.getCreator().getId(), creatorId)).toList();
@@ -131,7 +130,7 @@ public class GameServiceImpl implements GameServicable {
     public GameModel increasePlaysByOne(GameModel game){
         game.setTimesPlayed(game.getTimesPlayed() + 1);
         return gameRepository.save(game);
-        //might not need this but might be good for webController
+        //might not need this but might be good for webController to increase every time page is clicked
     }
 
     public boolean validateExistingGame(GameModel game) {
@@ -164,7 +163,7 @@ public class GameServiceImpl implements GameServicable {
         return true;
     }
 
-    private Matcher getGenreMatcher(String genre){
+    public Matcher getGenreMatcher(String genre){
         String genreRegex = "\\b(Puzzle|Platformer|Shooter|Racing|Fighting|Sports|Adventure|Strategy|Simulation|Arcade)\\b";
         Pattern pattern = Pattern.compile(genreRegex, Pattern.CASE_INSENSITIVE);
         return pattern.matcher(genre);
