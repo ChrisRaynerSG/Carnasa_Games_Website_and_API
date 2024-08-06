@@ -11,11 +11,9 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -44,13 +42,21 @@ public class GameController {
                 WebMvcLinkBuilder.linkTo(methodOn(GameController.class).getAllGames()).withSelfRel()
         ), HttpStatus.OK);
     }
-    @GetMapping("/search/{gameId}")
+    @GetMapping("/search/id/{gameId}")
     public ResponseEntity<EntityModel<GameModel>> getGameById(@PathVariable("gameId") Long gameId){
         if(gameService.getGame(gameId).isEmpty()){
             return ResponseEntity.notFound().build();
         }
         GameModel gameModel = gameService.getGame(gameId).get();
         return new ResponseEntity<>(getGameEntityModel(gameModel), HttpStatus.OK);
+    }
+
+    @PostMapping("/new")
+    public ResponseEntity<EntityModel<GameModel>> createGame(@RequestBody GameModel gameModel){
+        GameModel newGame = gameService.createGame(gameModel);
+        URI location = URI.create("/api/games/search/id/"+newGame.getId());
+        Link selfLink = WebMvcLinkBuilder.linkTo(methodOn(GameController.class).getGameById(newGame.getId())).withSelfRel();
+        return ResponseEntity.created(location).body(getGameEntityModel(newGame).add(selfLink));
     }
 
     private Link getGameCreator(GameModel gameModel){

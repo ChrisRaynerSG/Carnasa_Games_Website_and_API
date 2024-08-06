@@ -12,7 +12,7 @@ public class HighScoreModel {
     @Id
     @GeneratedValue
     @Column(name = "score_id")
-    private Long scoreId;
+    private long scoreId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id")
