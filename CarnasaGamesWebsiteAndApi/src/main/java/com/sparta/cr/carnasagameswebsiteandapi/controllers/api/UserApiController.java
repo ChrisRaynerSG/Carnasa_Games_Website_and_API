@@ -42,12 +42,21 @@ public class UserApiController {
                 .withSelfRel()), HttpStatus.OK);
     }
 
-    @GetMapping("/search/{userId}")
+    @GetMapping("/search/id/{userId}")
     public ResponseEntity<EntityModel<UserModel>> getUserById(@PathVariable Long userId) {
         if(userService.getUser(userId).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         UserModel userModel = userService.getUser(userId).get();
+        return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
+    }
+
+    @GetMapping("/search/name/{username}")
+    public ResponseEntity<EntityModel<UserModel>> getUserByName(@PathVariable String username) {
+        if(userService.getUserByUsername(username).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        UserModel userModel = userService.getUserByUsername(username).get();
         return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
     }
 
@@ -57,7 +66,7 @@ public class UserApiController {
             return ResponseEntity.badRequest().build();
         }
         UserModel newUser = userService.createUser(userModel);
-        URI location = URI.create("/api/users/search/"+newUser.getId());
+        URI location = URI.create("/api/users/search/id/"+newUser.getId());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(newUser.getId())).withSelfRel();
         return ResponseEntity.created(location).body(EntityModel.of(newUser).add(selfLink));
     }
