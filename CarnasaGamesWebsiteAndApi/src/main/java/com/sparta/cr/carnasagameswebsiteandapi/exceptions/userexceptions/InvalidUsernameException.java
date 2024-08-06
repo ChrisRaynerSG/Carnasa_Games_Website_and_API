@@ -1,4 +1,4 @@
-package com.sparta.cr.carnasagameswebsiteandapi.exceptions;
+package com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions;
 
 public class InvalidUsernameException extends RuntimeException{
     public InvalidUsernameException(String message){

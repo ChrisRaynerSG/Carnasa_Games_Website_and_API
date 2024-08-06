@@ -62,6 +62,21 @@ public class UserApiController {
         return ResponseEntity.created(location).body(EntityModel.of(newUser).add(selfLink));
     }
 
+    @PutMapping("/update/{userId}")
+    public ResponseEntity<EntityModel<UserModel>> updateUser(@PathVariable Long userId, @RequestBody UserModel userModel) {
+        if(userService.getUser(userId).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if(!userModel.getId().equals(userId)) {
+            return ResponseEntity.badRequest().build();
+        }
+        if(!userService.validateExistingUserUpdate(userModel)){
+            return ResponseEntity.badRequest().build();
+        }
+        userService.updateUser(userModel);
+        return ResponseEntity.noContent().build();
+    }
+
     private List<Link> getCommentsLinks(UserModel user) {
         return commentService
                 .getCommentsByUser(user.getId())

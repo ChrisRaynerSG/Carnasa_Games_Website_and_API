@@ -1,4 +1,4 @@
-package com.sparta.cr.carnasagameswebsiteandapi.exceptions;
+package com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions;
 
 public class EmailAlreadyExistsException extends RuntimeException {
     public EmailAlreadyExistsException(String message) {

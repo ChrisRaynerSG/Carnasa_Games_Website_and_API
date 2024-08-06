@@ -1,5 +1,6 @@
 package com.sparta.cr.carnasagameswebsiteandapi.exceptions;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidPasswordException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleInvalidPasswordException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(CantChangeUsernameException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleCantChangeUsernameException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(InvalidRoleException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleInvalidRoleException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
     }
 

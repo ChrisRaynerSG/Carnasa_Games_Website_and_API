@@ -1,4 +1,4 @@
-package com.sparta.cr.carnasagameswebsiteandapi.exceptions;
+package com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions;
 
 public class InvalidEmailException extends RuntimeException{
     public InvalidEmailException(String message){
