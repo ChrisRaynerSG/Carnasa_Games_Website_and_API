@@ -1,10 +1,12 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.*;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.UserServiceable;
 import jakarta.persistence.Id;
 import org.springdoc.core.converters.AdditionalModelsConverter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -66,6 +68,7 @@ public class UserServiceImpl implements UserServiceable {
         if(!validateNewUser(user)){
             return null;
         }
+        user.setRoles("ROLE_USER");
         return userRepository.save(encryptPassword(user));
     }
 
@@ -98,26 +101,22 @@ public class UserServiceImpl implements UserServiceable {
 
     public boolean validateNewUser(UserModel user){
         if(getUser(user.getId()).isPresent()){
-            //user already exists exception
-            return false;
+            throw new UserAlreadyExistsException(user.getId().toString());
         }
         else if(!validateUsername(user.getUsername())){
-            //invalid username exception
-            return false;
+            throw new InvalidUsernameException(user.getUsername());
         }
         else if(!usernameExists(user)){
-            //username exists exception
-            return false;
+            throw new UsernameAlreadyExistsException(user.getUsername());
         }
         else if(!validateEmail(user.getEmail())){
-            //validate email exception
-            return false;
-        } else if (!emailExists(user)) {
-            //email exists exception
-            return false;
-        } else if(!validatePassword(user.getPassword())){
-            // validate password exception
-            return false;
+            throw new InvalidEmailException(user.getEmail());
+        }
+        else if (!emailExists(user)) {
+            throw new EmailAlreadyExistsException(user.getEmail());
+        }
+        else if(!validatePassword(user.getPassword())){
+            throw new InvalidPasswordException("Invalid password provided. Passwords must contain at least one number, special character, lowercase and uppercase letter, and be greater than 8 characters.");
         }
         return true;
     }

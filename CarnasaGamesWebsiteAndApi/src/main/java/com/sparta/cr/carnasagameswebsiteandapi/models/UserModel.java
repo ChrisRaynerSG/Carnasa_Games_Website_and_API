@@ -31,6 +31,9 @@ public class UserModel {
     @Column(name = "is_private")
     private boolean isPrivate;
 
+    @Column(name = "roles", nullable = false)
+    private String roles;
+
     public Long getId() {
         return id;
     }
@@ -85,6 +88,13 @@ public class UserModel {
 
     public void setPrivate(boolean aPrivate) {
         isPrivate = aPrivate;
+    }
+
+    public String getRoles() {
+        return roles;
+    }
+    public void setRoles(String roles) {
+        this.roles = roles;
     }
 
     @Override
