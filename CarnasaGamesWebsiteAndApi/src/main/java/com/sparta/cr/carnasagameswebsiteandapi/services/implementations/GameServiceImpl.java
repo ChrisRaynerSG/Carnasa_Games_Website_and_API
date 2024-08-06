@@ -3,7 +3,7 @@ package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.GameAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidTitleException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.NoUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.GameRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.GameServicable;

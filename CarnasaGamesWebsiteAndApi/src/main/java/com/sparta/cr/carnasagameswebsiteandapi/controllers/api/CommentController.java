@@ -1,8 +1,11 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentNotFoundException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
-import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.CommentServiceImpl;
+import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
+import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -13,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -20,10 +24,14 @@ import java.util.List;
 public class CommentController {
 
     private final CommentServiceImpl commentService;
+    private final UserServiceImpl userService;
+    private final GameServiceImpl gameService;
 
     @Autowired
-    public CommentController(CommentServiceImpl commentService) {
+    public CommentController(CommentServiceImpl commentService, UserServiceImpl userService, GameServiceImpl gameService) {
         this.commentService = commentService;
+        this.userService = userService;
+        this.gameService = gameService;
     }
 
     @GetMapping("/search/all")
@@ -41,6 +49,45 @@ public class CommentController {
         }
         CommentModel commentModel = commentService.getComment(commentId).get();
         return ResponseEntity.ok(getCommentEntityModel(commentModel));
+    }
+    @GetMapping("/search/game/{gameId}")
+    public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByGame(@PathVariable Long gameId) {
+        if(gameService.getGame(gameId).isEmpty()) {
+            throw new CommentNotFoundException("Game with ID: " + gameId + " not found");
+        }
+       List<EntityModel<CommentModel>> comments = commentService.getCommentsByGame(gameId).stream().map(this::getCommentEntityModel).toList();
+       if(comments.isEmpty()) {
+           return ResponseEntity.notFound().build();
+       }
+       return new ResponseEntity<>(CollectionModel.of(comments), HttpStatus.OK);
+    }
+    @GetMapping("/search/user/{userId}")
+    public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByUser(@PathVariable Long userId) {
+        if(userService.getUser(userId).isEmpty()) {
+            throw new UserNotFoundException(userId.toString());
+        }
+        List<EntityModel<CommentModel>> comments = commentService.getCommentsByUser(userId).stream().map(this::getCommentEntityModel).toList();
+        if(comments.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return new ResponseEntity<>(CollectionModel.of(comments), HttpStatus.OK);
+    }
+    @GetMapping("/search/date/today")
+    public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByDateToday() {
+        LocalDate today = LocalDate.now();
+        List<EntityModel<CommentModel>> comments = commentService.getCommentsFromToday(today).stream().map(this::getCommentEntityModel).toList();
+        if(comments.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return new ResponseEntity<>(CollectionModel.of(comments), HttpStatus.OK);
+    }
+    @GetMapping("/search/date/{date1}/{date2}")
+    public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByDate(@PathVariable String date1, @PathVariable String date2) {
+        List<EntityModel<CommentModel>> comments = commentService.getCommentsByDate(date1, date2).stream().map(this::getCommentEntityModel).toList();
+        if(comments.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return new ResponseEntity<>(CollectionModel.of(comments), HttpStatus.OK);
     }
 
     @PostMapping("/new")

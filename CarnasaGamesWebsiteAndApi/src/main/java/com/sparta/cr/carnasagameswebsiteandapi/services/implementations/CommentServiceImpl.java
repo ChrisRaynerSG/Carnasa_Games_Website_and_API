@@ -3,9 +3,9 @@ package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentMustHaveTextException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentNotFoundException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.NoGameException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.NoUserException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoGameException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidDateException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.CommentRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.CommentServiceable;
@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -107,8 +109,25 @@ public class CommentServiceImpl implements CommentServiceable {
     }
 
     @Override
-    public List<CommentModel> getCommentsByDate(LocalDate startDate, LocalDate endDate) {
-        return getAllComments().stream().filter(commentModel -> isInDateRange(startDate,endDate,commentModel.getDate())).toList();
+    public List<CommentModel> getCommentsByDate(String startDate, String endDate) {
+
+        LocalDate startDateDate;
+        LocalDate endDateDate;
+
+        if(validateDateFormat(startDate) && validateDateFormat(endDate)){
+            startDateDate = LocalDate.parse(startDate);
+            endDateDate = LocalDate.parse(endDate);
+        }
+        else {
+            throw new InvalidDateException("Dates must be in format yyyy-MM-dd!");
+        }
+        if(startDateDate.isAfter(endDateDate)){
+            throw new InvalidDateException("Start date must be before end date!");
+        }
+        if(startDateDate.isAfter(LocalDate.now())){
+            throw new InvalidDateException("Start date cannot be in the future!");
+        }
+        return getAllComments().stream().filter(commentModel -> isInDateRange(startDateDate,endDateDate,commentModel.getDate())).toList();
     }
 
     @Override
@@ -169,5 +188,25 @@ public class CommentServiceImpl implements CommentServiceable {
         matcher.appendTail(censoredComment);
         comment.setCommentText(censoredComment.toString());
         return comment;
+    }
+
+    private boolean validateDateIsReal(String Date) {
+        try{
+            LocalDate parseDate = LocalDate.parse(Date, DateTimeFormatter.ISO_LOCAL_DATE);
+            return true;
+        }
+        catch (DateTimeParseException e){
+            return false;
+        }
+    }
+
+    private boolean validateDateFormat(String date) {
+        String DatePattern = "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$";
+        Pattern pattern = Pattern.compile(DatePattern);
+        Matcher matcher = pattern.matcher(date);
+        if(matcher.matches()){
+            return validateDateIsReal(date);
+        }
+        return false;
     }
 }

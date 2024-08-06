@@ -37,14 +37,6 @@ public class UserModel {
     @Column(name = "roles", nullable = false)
     private String roles;
 
-    @OneToMany(mappedBy = "creator", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonManagedReference(value = "game-creator")
-    private List<GameModel> games;
-
-    @OneToMany(mappedBy = "userModel", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonManagedReference(value = "user-comments")
-    private List<CommentModel> comments;
-
     public Long getId() {
         return id;
     }

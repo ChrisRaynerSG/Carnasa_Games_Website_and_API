@@ -3,11 +3,12 @@ package com.sparta.cr.carnasagameswebsiteandapi.exceptions;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentMustHaveTextException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentNotFoundException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.NoGameException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoGameException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.GameAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidTitleException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.NoUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidDateException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -106,6 +107,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CommentMustHaveTextException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleCommentMustHaveTextException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(InvalidDateException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleInvalidDateException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
     }
     private record ErrorResponse(Object errorDetails, String errorCode, String url){}

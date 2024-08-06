@@ -1,4 +1,4 @@
-package com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions;
+package com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions;
 
 public class NoUserException extends RuntimeException{
 
