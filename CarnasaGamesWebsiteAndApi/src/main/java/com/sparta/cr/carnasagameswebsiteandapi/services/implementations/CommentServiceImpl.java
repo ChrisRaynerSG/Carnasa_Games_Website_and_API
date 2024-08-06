@@ -6,6 +6,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.CommentServic
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -63,16 +64,23 @@ public class CommentServiceImpl implements CommentServiceable {
 
     @Override
     public List<CommentModel> getCommentsByGameAndUser(Long gameId, Long userId) {
-        return getCommentsByGame(gameId).stream().filter(commentModel -> commentModel.getUserModel().getId().equals(userId)).toList();
+        return getCommentsByGame(gameId)
+                .stream()
+                .filter(commentModel -> commentModel.getUserModel().getId().equals(userId))
+                .toList();
     }
 
     @Override
-    public List<CommentModel> getCommentsByDate(Date startDate, Date endDate) {
-        return List.of();
+    public List<CommentModel> getCommentsByDate(LocalDate startDate, LocalDate endDate) {
+        return getAllComments().stream().filter(commentModel -> isInDateRange(startDate,endDate,commentModel.getDate())).toList();
     }
 
     @Override
-    public List<CommentModel> getCommentsFromToday(Date today) {
-        return List.of();
+    public List<CommentModel> getCommentsFromToday(LocalDate today) {
+        return getAllComments().stream().filter(commentModel -> commentModel.getDate().equals(today)).toList();
+    }
+
+    private boolean isInDateRange(LocalDate start, LocalDate end, LocalDate commentDate) {
+        return start.isBefore(commentDate) && end.isAfter(commentDate);
     }
 }

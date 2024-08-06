@@ -13,7 +13,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,6 +55,10 @@ public class CommentServiceTest {
         comment2.setUserModel(user1);
         comment3.setGamesModel(game2);
         comment3.setUserModel(user1);
+
+        comment1.setDate(LocalDate.of(2021,12,25));
+        comment2.setDate(LocalDate.of(2021,12,26));
+        comment3.setDate(LocalDate.now());
 
         comments.add(comment1);
         comments.add(comment2);
@@ -102,6 +108,16 @@ public class CommentServiceTest {
     }
     @Test
     public void testGetCommentsByDateRangeReturnsComments(){
-
+        int expected = 2;
+        when(commentRepository.findAll()).thenReturn(comments);
+        int actual = commentService.getCommentsByDate(LocalDate.of(2020,12,12),LocalDate.of(2022,12,12)).size();
+        Assertions.assertEquals(expected, actual);
+    }
+    @Test
+    public void testGetCommentsByDateTodayReturnsComments(){
+        int expected = 1;
+        when(commentRepository.findAll()).thenReturn(comments);
+        int actual = commentService.getCommentsFromToday(LocalDate.now()).size();
+        Assertions.assertEquals(expected, actual);
     }
 }
