@@ -39,16 +39,12 @@ public class CommentController {
 
     @PostMapping("/new")
     public ResponseEntity<EntityModel<CommentModel>> createComment(@RequestBody CommentModel commentModel) {
-        if(commentService.createComment(commentModel)==null){
-            return ResponseEntity.badRequest().build();
-        }
+
         CommentModel newComment = commentService.createComment(commentModel);
         URI location = URI.create("/api/comments/search/"+newComment.getId());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentController.class).getCommentById(newComment.getId())).withSelfRel();
         return ResponseEntity.created(location).body(EntityModel.of(newComment).add(selfLink));
     }
-
-
 
     private Link getUserLink(CommentModel commentModel){
         return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(commentModel.getUserModel().getId())).withRel("User: " + commentModel.getUserModel().getUsername());

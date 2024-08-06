@@ -1,5 +1,9 @@
 package com.sparta.cr.carnasagameswebsiteandapi.exceptions;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentMustHaveTextException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentNotFoundException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.NoGameException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.GameAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidTitleException;
@@ -83,6 +87,26 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<ErrorResponse> handleUserNotFoundException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("NOT_FOUND", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.NOT_FOUND);
+    }
+    @ExceptionHandler(NoGameException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleNoGameException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(CommentAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<ErrorResponse> handleCommentAlreadyExistsException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("CONFLICT", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.CONFLICT);
+    }
+    @ExceptionHandler(CommentNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<ErrorResponse> handleCommentNotFoundException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("NOT_FOUND", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.NOT_FOUND);
+    }
+    @ExceptionHandler(CommentMustHaveTextException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleCommentMustHaveTextException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
     }
     private record ErrorResponse(Object errorDetails, String errorCode, String url){}
 }
