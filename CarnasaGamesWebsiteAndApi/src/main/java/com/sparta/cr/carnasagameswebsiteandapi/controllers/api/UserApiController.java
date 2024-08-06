@@ -77,6 +77,15 @@ public class UserApiController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/delete/{userId}")
+    public ResponseEntity<EntityModel<UserModel>> deleteUser(@PathVariable Long userId) {
+        if(userService.getUser(userId).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        userService.deleteUser(userId);
+        return ResponseEntity.noContent().build();
+    }
+
     private List<Link> getCommentsLinks(UserModel user) {
         return commentService
                 .getCommentsByUser(user.getId())
