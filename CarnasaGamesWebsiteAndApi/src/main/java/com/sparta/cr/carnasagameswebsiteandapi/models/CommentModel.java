@@ -1,5 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -15,10 +17,12 @@ public class CommentModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id")
+    @JsonBackReference(value = "game-comments")
     private GameModel gameModel;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @JsonBackReference(value = "user-comments")
     private UserModel userModel;
 
     @Column(name = "comment_text")

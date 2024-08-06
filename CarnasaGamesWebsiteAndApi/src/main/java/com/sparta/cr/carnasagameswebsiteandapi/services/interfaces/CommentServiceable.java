@@ -18,7 +18,7 @@ public interface CommentServiceable {
     List<CommentModel> getCommentsByUser(Long userId);
     List<CommentModel> getCommentsByGame(Long gameId);
     List<CommentModel> getCommentsByGameAndUser(Long gameId, Long userId);
-    List<CommentModel> getCommentsByDate(LocalDate startDate, LocalDate endDate);
+    List<CommentModel> getCommentsByDate(String startDate, String endDate);
     List<CommentModel> getCommentsFromToday(LocalDate today);
 
 }

@@ -1,7 +1,11 @@
 package com.sparta.cr.carnasagameswebsiteandapi.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+
+import java.util.List;
 
 @Entity
 @Table(schema = "games_website", name = "games")
@@ -16,8 +20,8 @@ public class GameModel {
     private String title;
 
     @JoinColumn(name = "creator", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonBackReference
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonBackReference(value = "game-creator")
     private UserModel creator;
 
     @Column(name = "is_published", nullable = false)

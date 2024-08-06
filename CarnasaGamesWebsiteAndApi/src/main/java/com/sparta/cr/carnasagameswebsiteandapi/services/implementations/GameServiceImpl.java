@@ -3,7 +3,7 @@ package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.GameAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidTitleException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.NoUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.GameRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.GameServicable;
@@ -116,7 +116,7 @@ public class GameServiceImpl implements GameServicable {
             throw new GameAlreadyExistsException(game.getId().toString());
         }
         if(userServiceImpl.getUser(game.getCreator().getId()).isEmpty()){
-            throw new NoUserException();
+            throw new NoUserException("Cannot create game without creator");
         }
         if(!matcher.matches()){
             throw new InvalidGenreException(game.getGenre());
@@ -157,7 +157,7 @@ public class GameServiceImpl implements GameServicable {
 
         if(!beforeUpdate.getCreator().getId().equals(game.getCreator().getId())){
             if(userServiceImpl.getUser(game.getCreator().getId()).isEmpty()){
-                throw new NoUserException();
+                throw new NoUserException("cannot update game with no creator");
             }
         }
         return true;

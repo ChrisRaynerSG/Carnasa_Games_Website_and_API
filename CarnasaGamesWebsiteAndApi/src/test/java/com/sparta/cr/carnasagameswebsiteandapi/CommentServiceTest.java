@@ -110,7 +110,7 @@ public class CommentServiceTest {
     public void testGetCommentsByDateRangeReturnsComments(){
         int expected = 2;
         when(commentRepository.findAll()).thenReturn(comments);
-        int actual = commentService.getCommentsByDate(LocalDate.of(2020,12,12),LocalDate.of(2022,12,12)).size();
+        int actual = commentService.getCommentsByDate("2020-12-25","2021-12-25").size();
         Assertions.assertEquals(expected, actual);
     }
     @Test

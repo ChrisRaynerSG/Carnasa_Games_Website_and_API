@@ -104,7 +104,7 @@ public class UserApiController {
                 .map(comment ->
                         WebMvcLinkBuilder
                         .linkTo(WebMvcLinkBuilder.methodOn(CommentController.class).getCommentById(comment.getId()))
-                        .withRel(comment.getId().toString()))
+                        .withRel("Comment: " + comment.getCommentText()))
                 .toList();
     }
 
