@@ -1,5 +1,6 @@
 package com.sparta.cr.carnasagameswebsiteandapi.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
 @Entity
@@ -9,13 +10,14 @@ public class GameModel {
     @Id
     @GeneratedValue
     @Column(name = "game_id", nullable = false, updatable = false)
-    private Long id;
+    private long id;
 
     @Column(name = "title", nullable = false)
     private String title;
 
     @JoinColumn(name = "creator", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonBackReference
     private UserModel creator;
 
     @Column(name = "is_published", nullable = false)

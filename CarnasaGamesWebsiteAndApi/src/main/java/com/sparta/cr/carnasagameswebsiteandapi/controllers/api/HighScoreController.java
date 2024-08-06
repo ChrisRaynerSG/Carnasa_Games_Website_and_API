@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/high_scores")
+@RequestMapping("/api/scores")
 public class HighScoreController {
 
     private HighScoreServiceImpl highScoreService;

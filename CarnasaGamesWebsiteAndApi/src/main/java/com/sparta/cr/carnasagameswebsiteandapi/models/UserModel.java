@@ -13,7 +13,7 @@ public class UserModel {
     @Column(name = "user_id", nullable = false, updatable = false)
     private long id;
 
-    @Column(name = "username", nullable = false, unique = true)
+    @Column(name = "username", nullable = false, unique = true, updatable = false)
     private String username;
 
     @Column(name = "email", nullable = false, unique = true)
@@ -30,6 +30,9 @@ public class UserModel {
 
     @Column(name = "is_private")
     private boolean isPrivate;
+
+    @Column(name = "roles", nullable = false)
+    private String roles;
 
     public Long getId() {
         return id;
@@ -85,6 +88,13 @@ public class UserModel {
 
     public void setPrivate(boolean aPrivate) {
         isPrivate = aPrivate;
+    }
+
+    public String getRoles() {
+        return roles;
+    }
+    public void setRoles(String roles) {
+        this.roles = roles;
     }
 
     @Override

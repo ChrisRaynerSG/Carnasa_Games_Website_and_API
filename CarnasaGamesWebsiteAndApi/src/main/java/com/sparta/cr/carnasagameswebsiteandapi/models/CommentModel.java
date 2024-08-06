@@ -11,7 +11,7 @@ public class CommentModel {
     @Id
     @GeneratedValue
     @Column(name = "comment_id")
-    private Long id;
+    private long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id")

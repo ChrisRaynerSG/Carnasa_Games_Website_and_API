@@ -1,5 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UsernameNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.CommentServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
@@ -12,11 +14,9 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -44,13 +44,57 @@ public class UserApiController {
                 .withSelfRel()), HttpStatus.OK);
     }
 
-    @GetMapping("/search/{userId}")
+    @GetMapping("/search/id/{userId}")
     public ResponseEntity<EntityModel<UserModel>> getUserById(@PathVariable Long userId) {
         if(userService.getUser(userId).isEmpty()) {
-            return ResponseEntity.notFound().build();
+            throw new UserNotFoundException(userId.toString());
         }
         UserModel userModel = userService.getUser(userId).get();
         return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
+    }
+
+    @GetMapping("/search/name/{username}")
+    public ResponseEntity<EntityModel<UserModel>> getUserByName(@PathVariable String username) {
+        if(userService.getUserByUsername(username).isEmpty()) {
+            throw new UsernameNotFoundException(username);
+        }
+        UserModel userModel = userService.getUserByUsername(username).get();
+        return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
+    }
+
+    @PostMapping("/new")
+    public ResponseEntity<EntityModel<UserModel>> createUser(@RequestBody UserModel userModel) {
+        if(!userService.validateNewUser(userModel)){
+            return ResponseEntity.badRequest().build();
+        }
+        UserModel newUser = userService.createUser(userModel);
+        URI location = URI.create("/api/users/search/id/"+newUser.getId());
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(newUser.getId())).withSelfRel();
+        return ResponseEntity.created(location).body(EntityModel.of(newUser).add(selfLink));
+    }
+
+    @PutMapping("/update/{userId}")
+    public ResponseEntity<EntityModel<UserModel>> updateUser(@PathVariable Long userId, @RequestBody UserModel userModel) {
+        if(userService.getUser(userId).isEmpty()) {
+            throw new UserNotFoundException(userId.toString());
+        }
+        if(!userModel.getId().equals(userId)) {
+            return ResponseEntity.badRequest().build();
+        }
+        if(!userService.validateExistingUserUpdate(userModel)){
+            return ResponseEntity.badRequest().build();
+        }
+        userService.updateUser(userModel);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/delete/{userId}")
+    public ResponseEntity<EntityModel<UserModel>> deleteUser(@PathVariable Long userId) {
+        if(userService.getUser(userId).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        userService.deleteUser(userId);
+        return ResponseEntity.noContent().build();
     }
 
     private List<Link> getCommentsLinks(UserModel user) {
@@ -71,7 +115,7 @@ public class UserApiController {
                 .map(game ->
                         WebMvcLinkBuilder
                                 .linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getGameById(game.getId()))
-                                .withRel(game.getId().toString()))
+                                .withRel("Game: " + game.getTitle()))
                 .toList();
     }
 

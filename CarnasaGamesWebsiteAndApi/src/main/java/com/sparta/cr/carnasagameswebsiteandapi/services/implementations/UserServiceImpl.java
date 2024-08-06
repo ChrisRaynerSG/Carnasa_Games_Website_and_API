@@ -1,10 +1,9 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.*;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.UserServiceable;
-import jakarta.persistence.Id;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -62,23 +61,10 @@ public class UserServiceImpl implements UserServiceable {
 
     @Override
     public UserModel createUser(UserModel user) {
-
-        if(getUser(user.getId()).isPresent()){
-            //user already exists exception
+        if(!validateNewUser(user)){
             return null;
         }
-        if(getUserByUsername(user.getUsername()).isPresent()){
-            //username already taken exception
-            return null;
-        }
-        if(!validateUserDetails(user)){
-            return null;
-        }
-        if (getUserByEmail(user.getEmail()).isPresent()){
-            //email already exists exception
-            return null;
-        }
-
+        user.setRoles("ROLE_USER");
         return userRepository.save(encryptPassword(user));
     }
 
@@ -87,16 +73,14 @@ public class UserServiceImpl implements UserServiceable {
         if(getUser(user.getId()).isEmpty()){
             return null;
         }
-        if(user.getPassword().equals(getUser(user.getId()).get().getPassword())){
-            if(!validateEmail(user.getEmail())){
-                return null;
-            }
+        UserModel beforeUpdate = getUser(user.getId()).get();
+        if(!validateExistingUserUpdate(user)){
+            return null;
+        }
+        if(passwordEncoder.matches(user.getPassword(), beforeUpdate.getPassword())){
             return userRepository.save(user);
         }
         else {
-            if(!validateUserDetails(user)){
-                return null;
-            }
             return userRepository.save(encryptPassword(user));
         }
         //todo validation for images and other fields
@@ -109,11 +93,71 @@ public class UserServiceImpl implements UserServiceable {
         return user.orElse(null);
     }
 
+    public boolean validateNewUser(UserModel user){
+        if(getUser(user.getId()).isPresent()){
+            throw new UserAlreadyExistsException(user.getId().toString());
+        }
+        else if(!validateUsername(user.getUsername())){
+            throw new InvalidUsernameException(user.getUsername());
+        }
+        else if(!usernameExists(user)){
+            throw new UsernameAlreadyExistsException(user.getUsername());
+        }
+        else if(!validateEmail(user.getEmail())){
+            throw new InvalidEmailException(user.getEmail());
+        }
+        else if (!emailExists(user)) {
+            throw new EmailAlreadyExistsException(user.getEmail());
+        }
+        else if(!validatePassword(user.getPassword())){
+            throw new InvalidPasswordException();
+        }
+        return true;
+    }
+
+    public boolean validateExistingUserUpdate(UserModel user){
+        if(getUser(user.getId()).isEmpty()){
+            return false;
+        }
+        UserModel beforeUpdate = getUser(user.getId()).get();
+        if(!passwordEncoder.matches(user.getPassword(), beforeUpdate.getPassword())){
+            if(!validatePassword(user.getPassword())){
+                throw new InvalidPasswordException();
+            }
+        }
+        if(!beforeUpdate.getEmail().equals(user.getEmail())){
+            if(!validateEmail(user.getEmail())){
+                throw new InvalidEmailException(user.getEmail());
+            }
+            else if(!emailExists(user)){
+                throw new EmailAlreadyExistsException(user.getEmail());
+            }
+        }
+        if(!beforeUpdate.getUsername().equals(user.getUsername())){
+            throw new CantChangeUsernameException();
+        }
+        if(!beforeUpdate.getRoles().equals(user.getRoles())){
+            if(!user.getRoles().equals("ROLE_USER") || !user.getRoles().equals("ROLE_ADMIN")){
+                throw new InvalidRoleException();
+            }
+        }
+        return true;
+    }
+
     private boolean validatePassword(String password) {
         return password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
     }
+    private boolean usernameExists(UserModel user) {
+        return getUserByUsername(user.getUsername()).isEmpty();
+    }
+    private boolean validateUsername(String username) {
+        return username.matches("[a-zA-Z0-9_-]{3,20}$");
+    }
     private boolean validateEmail(String email) {
         return email.matches("^([a-zA-Z0-9_\\-.]+)@([a-zA-Z0-9_\\-.]+)\\.([a-zA-Z]{2,5})$");
+    }
+    private boolean emailExists(UserModel user) {
+        return getUserByEmail(user.getEmail()).isEmpty();
     }
     private boolean validateUserDetails(UserModel user) {
         return validateEmail(user.getEmail()) && validatePassword(user.getPassword());
