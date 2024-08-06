@@ -23,16 +23,29 @@ public class CommentServiceImpl implements CommentServiceable {
 
     @Override
     public CommentModel createComment(CommentModel comment) {
-        return null;
+        if(getComment(comment.getId()).isPresent()){
+            return null;
+        }
+        comment.setDate(LocalDate.now());
+        return commentRepository.save(comment);
     }
 
     @Override
     public CommentModel updateComment(CommentModel comment) {
-        return null;
+        if(getComment(comment.getId()).isEmpty()){
+            return null;
+        }
+        comment.setDate(LocalDate.now());
+        return commentRepository.save(comment);
     }
 
     @Override
     public CommentModel deleteComment(Long commentId) {
+        if(getComment(commentId).isPresent()){
+            CommentModel comment = getComment(commentId).get();
+            commentRepository.delete(getComment(commentId).get());
+            return comment;
+        }
         return null;
     }
 

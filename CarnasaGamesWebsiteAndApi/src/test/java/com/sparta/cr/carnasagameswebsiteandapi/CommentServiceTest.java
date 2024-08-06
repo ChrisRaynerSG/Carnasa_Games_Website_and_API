@@ -19,7 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class CommentServiceTest {
@@ -119,5 +119,59 @@ public class CommentServiceTest {
         when(commentRepository.findAll()).thenReturn(comments);
         int actual = commentService.getCommentsFromToday(LocalDate.now()).size();
         Assertions.assertEquals(expected, actual);
+    }
+    @Test
+    void createCommentReturnsNullWhenCommentAlreadyExists(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
+        when(commentRepository.save(comment)).thenReturn(comment);
+        CommentModel actual = commentService.createComment(comment);
+        Assertions.assertNull(actual);
+    }
+    @Test
+    void createCommentReturnsNewComment(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        when(commentRepository.findById(1L)).thenReturn(Optional.empty());
+        when(commentRepository.save(comment)).thenReturn(comment);
+        CommentModel actual = commentService.createComment(comment);
+        Assertions.assertNotNull(actual);
+    }
+    @Test
+    void updateCommentReturnsNullIfCommentDoesNotExist(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        when(commentRepository.findById(1L)).thenReturn(Optional.empty());
+        when(commentRepository.save(comment)).thenReturn(comment);
+        CommentModel actual = commentService.updateComment(comment);
+        Assertions.assertNull(actual);
+    }
+    @Test
+    void updateCommentReturnsUpdatedComment(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
+        when(commentRepository.save(comment)).thenReturn(comment);
+        CommentModel actual = commentService.updateComment(comment);
+        Assertions.assertNotNull(actual);
+    }
+    @Test
+    void deleteCommentReturnsNullIfCommentDoesNotExist(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        when(commentRepository.findById(1L)).thenReturn(Optional.empty());
+        CommentModel actual = commentService.deleteComment(1L);
+        verify(commentRepository, times(0)).delete(comment);
+        Assertions.assertNull(actual);
+    }
+    @Test
+    void deleteCommentReturnsDeletedComment(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
+        CommentModel actual = commentService.deleteComment(1L);
+        verify(commentRepository, times(1)).delete(comment);
+        Assertions.assertNotNull(actual);
     }
 }

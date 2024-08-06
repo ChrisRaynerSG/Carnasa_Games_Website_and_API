@@ -83,7 +83,7 @@ public class GameServiceImpl implements GameServicable {
             //user id not found exception
             return new ArrayList<>();
         }
-        return getAllGames().stream().filter(gameModel -> gameModel.getCreator().getId() == creatorId).toList();
+        return getAllGames().stream().filter(gameModel -> Objects.equals(gameModel.getCreator().getId(), creatorId)).toList();
     }
 
     @Override
