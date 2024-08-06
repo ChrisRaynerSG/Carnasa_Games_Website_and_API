@@ -9,6 +9,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNot
 import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.CommentRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.CommentServiceable;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -79,6 +80,7 @@ public class CommentServiceImpl implements CommentServiceable {
     }
 
     @Override
+    @Transactional
     public List<CommentModel> getCommentsByUser(Long userId) {
         return getAllComments()
                 .stream()
@@ -87,6 +89,7 @@ public class CommentServiceImpl implements CommentServiceable {
     }
 
     @Override
+    @Transactional
     public List<CommentModel> getCommentsByGame(Long gameId) {
         return getAllComments()
                 .stream()
@@ -95,6 +98,7 @@ public class CommentServiceImpl implements CommentServiceable {
     }
 
     @Override
+    @Transactional
     public List<CommentModel> getCommentsByGameAndUser(Long gameId, Long userId) {
         return getCommentsByGame(gameId)
                 .stream()
