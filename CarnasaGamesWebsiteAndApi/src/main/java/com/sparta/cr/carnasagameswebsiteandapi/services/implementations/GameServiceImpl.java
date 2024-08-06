@@ -112,11 +112,7 @@ public class GameServiceImpl implements GameServicable {
     }
 
     public boolean validateNewGame(GameModel game) {
-
-        String genreRegex = "\\b(Puzzle|Platformer|Shooter|Racing|Fighting|Sports|Adventure|Strategy|Simulation|Arcade)\\b";
-        Pattern pattern = Pattern.compile(genreRegex, Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(game.getGenre());
-
+        Matcher matcher = getGenreMatcher(game.getGenre());
         if(getGame(game.getId()).isPresent()){
             throw new GameAlreadyExistsException(game.getId().toString());
         }
@@ -130,5 +126,47 @@ public class GameServiceImpl implements GameServicable {
             throw new InvalidTitleException(game.getTitle());
         }
         return true;
+    }
+
+    public GameModel increasePlaysByOne(GameModel game){
+        game.setTimesPlayed(game.getTimesPlayed() + 1);
+        return gameRepository.save(game);
+        //might not need this but might be good for webController
+    }
+
+    public boolean validateExistingGame(GameModel game) {
+        Matcher matcher = getGenreMatcher(game.getGenre());
+        if(getGame(game.getId()).isEmpty()){
+            return false; // gameNotFoundException already covered in Controller
+        }
+        GameModel beforeUpdate = getGame(game.getId()).get();
+        if(beforeUpdate.getTimesPlayed()>game.getTimesPlayed()){
+            return false; //cant decrease times played exception
+        }
+
+        if(!beforeUpdate.getTitle().equals(game.getTitle())){
+            if(!game.getTitle().matches("[a-zA-Z0-9\\s]+")){
+                throw new InvalidTitleException(game.getTitle());
+            }
+        }
+
+        if(!beforeUpdate.getGenre().equals(game.getGenre())){
+            if(!matcher.matches()){
+                throw new InvalidGenreException(game.getGenre());
+            }
+        }
+
+        if(!beforeUpdate.getCreator().getId().equals(game.getCreator().getId())){
+            if(userServiceImpl.getUser(game.getCreator().getId()).isEmpty()){
+                throw new NoUserException();
+            }
+        }
+        return true;
+    }
+
+    private Matcher getGenreMatcher(String genre){
+        String genreRegex = "\\b(Puzzle|Platformer|Shooter|Racing|Fighting|Sports|Adventure|Strategy|Simulation|Arcade)\\b";
+        Pattern pattern = Pattern.compile(genreRegex, Pattern.CASE_INSENSITIVE);
+        return pattern.matcher(genre);
     }
 }

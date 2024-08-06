@@ -62,6 +62,22 @@ public class GameController {
         return ResponseEntity.created(location).body(getGameEntityModel(newGame).add(selfLink));
     }
 
+    @PutMapping("/id/{gameId}")
+    public ResponseEntity updateGame(@PathVariable("gameId") Long gameId, @RequestBody GameModel gameModel){
+        if(gameService.getGame(gameId).isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+        if(!gameModel.getId().equals(gameId)){
+            return ResponseEntity.badRequest().build();
+        }
+        if(!gameService.validateExistingGame(gameModel)){
+            return ResponseEntity.badRequest().build();
+        }
+        GameModel updatedGame = gameService.updateGame(gameModel);
+        return ResponseEntity.noContent().build();
+
+    }
+
     private Link getGameCreator(GameModel gameModel){
         return WebMvcLinkBuilder.linkTo(methodOn(UserApiController.class).getUserById(gameModel.getCreator().getId())).withRel("Creator: " + gameModel.getCreator().getUsername());
     }
