@@ -2,6 +2,7 @@ package com.sparta.cr.carnasagameswebsiteandapi.models;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Entity
@@ -25,7 +26,7 @@ public class HighScoreModel {
     private Long score;
 
     @Column(name = "date")
-    private Date date;
+    private LocalDate date;
 
     public Long getScoreId() {
         return scoreId;
@@ -59,11 +60,11 @@ public class HighScoreModel {
         this.score = score;
     }
 
-    public Date getDate() {
+    public LocalDate getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(LocalDate date) {
         this.date = date;
     }
 

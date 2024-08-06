@@ -224,11 +224,12 @@ public class GameServiceTest {
         GameModel gameModel = new GameModel();
         gameModel.setId(1234L);
         gameModel.setGenre("action");
+        gameModel.setTitle("Game Title");
         gameModel.setCreator(userModel1);
         when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
         when(gameRepository.save(any(GameModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
         GameModel createdGame = gameServiceImpl.createGame(gameModel);
-        verify(gameRepository, times(1)).save(any(GameModel.class));
+        verify(gameRepository, times(1)).save(gameModel);
         Assertions.assertNotNull(createdGame);
     }
     @Test

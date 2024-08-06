@@ -23,7 +23,7 @@ public class GameServiceImpl implements GameServicable {
 
     @Override
     public GameModel createGame(GameModel game) {
-        if(gameRepository.findById(game.getId()).isEmpty()){
+        if(getGame(game.getId()).isPresent()){
             return null;
         }
         game.setPublished(false);
@@ -33,7 +33,7 @@ public class GameServiceImpl implements GameServicable {
 
     @Override
     public GameModel updateGame(GameModel game) {
-        if(gameRepository.existsById(game.getId())) {
+        if(getGame(game.getId()).isEmpty()) {
             return null;
         }
         return gameRepository.save(game);
@@ -83,7 +83,7 @@ public class GameServiceImpl implements GameServicable {
             //user id not found exception
             return new ArrayList<>();
         }
-        return getAllGames().stream().filter(gameModel -> gameModel.getCreator().getId() == creatorId).toList();
+        return getAllGames().stream().filter(gameModel -> Objects.equals(gameModel.getCreator().getId(), creatorId)).toList();
     }
 
     @Override

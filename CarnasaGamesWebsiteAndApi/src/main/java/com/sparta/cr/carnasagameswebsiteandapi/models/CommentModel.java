@@ -2,7 +2,7 @@ package com.sparta.cr.carnasagameswebsiteandapi.models;
 
 import jakarta.persistence.*;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Table(schema = "games_website", name = "comments")
@@ -25,7 +25,10 @@ public class CommentModel {
     private String commentText;
 
     @Column(name = "date")
-    private Date date;
+    private LocalDate date;
+
+    @Column(name = "is_updated")
+    private Boolean isUpdated;
 
     public Long getId() {
         return id;
@@ -59,12 +62,19 @@ public class CommentModel {
         this.commentText = commentText;
     }
 
-    public Date getDate() {
+    public LocalDate getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public Boolean getIsUpdated() {
+        return isUpdated;
+    }
+    public void setIsUpdated(Boolean isUpdated) {
+        this.isUpdated = isUpdated;
     }
 
     @Override
