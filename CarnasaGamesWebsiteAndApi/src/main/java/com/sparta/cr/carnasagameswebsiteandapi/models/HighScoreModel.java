@@ -18,12 +18,12 @@ public class HighScoreModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id")
-    @JsonBackReference
+    @JsonBackReference(value = "score-game")
     private GameModel gameModel;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    @JsonBackReference
+    @JsonBackReference(value = "score-user")
     private UserModel userModel;
 
     @Column(name = "score")
