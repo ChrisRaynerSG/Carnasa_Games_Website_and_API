@@ -1,14 +1,9 @@
 package com.sparta.cr.carnasagameswebsiteandapi.exceptions;
 
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentAlreadyExistsException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentMustHaveTextException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentNotFoundException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoGameException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.GameAlreadyExistsException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidTitleException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoUserException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidDateException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.*;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.*;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.*;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.scoreexceptions.*;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -74,7 +69,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidTitleException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
     }
-    @ExceptionHandler(NoUserException.class)
+    @ExceptionHandler(InvalidUserException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleNoUserException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
@@ -89,17 +84,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUserNotFoundException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("NOT_FOUND", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.NOT_FOUND);
     }
-    @ExceptionHandler(NoGameException.class)
+    @ExceptionHandler(InvalidGameException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleNoGameException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
     }
-    @ExceptionHandler(CommentAlreadyExistsException.class)
+    @ExceptionHandler(ModelAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<ErrorResponse> handleCommentAlreadyExistsException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("CONFLICT", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.CONFLICT);
     }
-    @ExceptionHandler(CommentNotFoundException.class)
+    @ExceptionHandler(ModelNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<ErrorResponse> handleCommentNotFoundException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("NOT_FOUND", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.NOT_FOUND);
@@ -113,6 +108,11 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleInvalidDateException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(ScoreOutOfBoundsException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> handleScoreOutOfBoundsException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("FORBIDDEN", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.FORBIDDEN);
     }
     private record ErrorResponse(Object errorDetails, String errorCode, String url){}
 }

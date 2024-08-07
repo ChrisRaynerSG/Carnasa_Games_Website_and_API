@@ -1,9 +1,10 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.GameAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidTitleException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.GameRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.GameServicable;
@@ -113,10 +114,10 @@ public class GameServiceImpl implements GameServicable {
     public boolean validateNewGame(GameModel game) {
         Matcher matcher = getGenreMatcher(game.getGenre());
         if(getGame(game.getId()).isPresent()){
-            throw new GameAlreadyExistsException(game.getId().toString());
+            throw new ModelAlreadyExistsException("Cannot create new game with ID: " + game.getId() + " already exists");
         }
         if(userServiceImpl.getUser(game.getCreator().getId()).isEmpty()){
-            throw new NoUserException("Cannot create game without creator");
+            throw new InvalidUserException("Cannot create game without creator");
         }
         if(!matcher.matches()){
             throw new InvalidGenreException(game.getGenre());
@@ -136,7 +137,7 @@ public class GameServiceImpl implements GameServicable {
     public boolean validateExistingGame(GameModel game) {
         Matcher matcher = getGenreMatcher(game.getGenre());
         if(getGame(game.getId()).isEmpty()){
-            return false; // gameNotFoundException already covered in Controller
+            throw new ModelNotFoundException("Cannot update game as ID: " + game.getId() + " does not exist");
         }
         GameModel beforeUpdate = getGame(game.getId()).get();
         if(beforeUpdate.getTimesPlayed()>game.getTimesPlayed()){
@@ -157,7 +158,7 @@ public class GameServiceImpl implements GameServicable {
 
         if(!beforeUpdate.getCreator().getId().equals(game.getCreator().getId())){
             if(userServiceImpl.getUser(game.getCreator().getId()).isEmpty()){
-                throw new NoUserException("cannot update game with no creator");
+                throw new InvalidUserException("cannot update game with no creator");
             }
         }
         return true;

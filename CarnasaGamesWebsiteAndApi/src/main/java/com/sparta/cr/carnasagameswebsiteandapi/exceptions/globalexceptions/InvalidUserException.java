@@ -1,8 +1,8 @@
 package com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions;
 
-public class NoUserException extends RuntimeException{
+public class InvalidUserException extends RuntimeException{
 
-    public NoUserException(String message){
+    public InvalidUserException(String message){
         super(message);
     }
 }

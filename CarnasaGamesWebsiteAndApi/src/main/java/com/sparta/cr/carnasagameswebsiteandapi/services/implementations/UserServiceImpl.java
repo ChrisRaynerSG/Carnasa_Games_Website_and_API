@@ -1,4 +1,5 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.*;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
@@ -65,6 +66,7 @@ public class UserServiceImpl implements UserServiceable {
             return null;
         }
         user.setRoles("ROLE_USER");
+        user.setEmail(user.getEmail().toLowerCase());
         return userRepository.save(encryptPassword(user));
     }
 
@@ -73,11 +75,11 @@ public class UserServiceImpl implements UserServiceable {
         if(getUser(user.getId()).isEmpty()){
             return null;
         }
-        UserModel beforeUpdate = getUser(user.getId()).get();
         if(!validateExistingUserUpdate(user)){
             return null;
         }
         else {
+            user.setEmail(user.getEmail().toLowerCase());
             return userRepository.save(encryptPassword(user));
         }
         //todo validation for images and other fields
@@ -92,7 +94,7 @@ public class UserServiceImpl implements UserServiceable {
 
     public boolean validateNewUser(UserModel user){
         if(getUser(user.getId()).isPresent()){
-            throw new UserAlreadyExistsException(user.getId().toString());
+            throw new ModelAlreadyExistsException("Cannot create new User with ID: " + user.getId() + " already exists");
         }
         else if(!validateUsername(user.getUsername())){
             throw new InvalidUsernameException(user.getUsername());
@@ -114,7 +116,7 @@ public class UserServiceImpl implements UserServiceable {
 
     public boolean validateExistingUserUpdate(UserModel user){
         if(getUser(user.getId()).isEmpty()){
-            return false;
+            throw new ModelAlreadyExistsException("Cannot update User as ID: " + user.getId() + " does not exist");
         }
         UserModel beforeUpdate = getUser(user.getId()).get();
         if(!passwordEncoder.matches(user.getPassword(), beforeUpdate.getPassword())){
@@ -151,7 +153,8 @@ public class UserServiceImpl implements UserServiceable {
         return username.matches("[a-zA-Z0-9_-]{3,20}$");
     }
     private boolean validateEmail(String email) {
-        return email.matches("^([a-zA-Z0-9_\\-.]+)@([a-zA-Z0-9_\\-.]+)\\.([a-zA-Z]{2,5})$");
+        email = email.toLowerCase();
+        return email.matches("^([a-zA-Z0-9_\\-.]+)@([a-z0-9_\\-.]+)\\.([a-zA-Z]{2,5})$");
     }
     private boolean emailExists(UserModel user) {
         return getUserByEmail(user.getEmail()).isEmpty();

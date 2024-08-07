@@ -1,10 +1,11 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoGameException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoUserException;
-import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.scoreexceptions.ScoreOutOfBoundsException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.HighScoreModel;
-import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.HighScoreRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.HighScoreServiceable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,33 +129,33 @@ public class HighScoreServiceImpl implements HighScoreServiceable{
 
     public boolean validateNewHighScore(HighScoreModel highScoreModel) {
         if(getHighScore(highScoreModel.getScoreId()).isPresent()){
-            return false; //HighScoreAlreadyExists
+            throw new ModelAlreadyExistsException("Cannot create new score with ID: " + highScoreModel.getScoreId() + " already exists");
         }
         if(userService.getUser(highScoreModel.getUserModel().getId()).isEmpty()){
-            throw new NoUserException("Cannot create comment as user with ID: " + highScoreModel.getUserModel().getId()+" does not exist." );
+            throw new InvalidUserException("Cannot create comment as user with ID: " + highScoreModel.getUserModel().getId()+" does not exist." );
         }
         if(gameService.getGame(highScoreModel.getGamesModel().getId()).isEmpty()){
-            throw new NoGameException("Cannot create comment as game with ID: " + highScoreModel.getGamesModel().getId() + " does not exist." );
+            throw new InvalidGameException("Cannot create comment as game with ID: " + highScoreModel.getGamesModel().getId() + " does not exist." );
         }
         if(highScoreModel.getScore()>=Long.MAX_VALUE || highScoreModel.getScore()<=Long.MIN_VALUE){
-            return false; //outOfBoundsException
+            throw new ScoreOutOfBoundsException(highScoreModel.getScore().toString());
         }
         return true;
     }
 
     public boolean validateExistingHighScore(HighScoreModel highScoreModel) {
         if(getHighScore(highScoreModel.getScoreId()).isEmpty()){
-            return false; //HighScoreDoesntExist
+            throw new ModelNotFoundException("Cannot update score as ID: " + highScoreModel.getScoreId() + " does not exist." );
         }
         HighScoreModel beforeUpdate = getHighScore(highScoreModel.getScoreId()).get();
         if(!beforeUpdate.getUserModel().getId().equals(highScoreModel.getUserModel().getId())){
-            throw new NoUserException("Cannot update HighScore as new user ID detected");
+            throw new InvalidUserException("Cannot update HighScore as new user ID detected");
         }
         if(!beforeUpdate.getGamesModel().getId().equals(highScoreModel.getGamesModel().getId())){
-            throw new NoGameException("Cannot update HighScore as new game ID detected");
+            throw new InvalidGameException("Cannot update HighScore as new game ID detected");
         }
         if(highScoreModel.getScore()>=Long.MAX_VALUE || highScoreModel.getScore()<=Long.MIN_VALUE){
-            return false; //outOfBoundsException
+            throw new ScoreOutOfBoundsException(highScoreModel.getScore().toString());
         }
         return true;
     }
