@@ -2,25 +2,29 @@ package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.*;
-import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModel;
-import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModelId;
-import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
+import com.sparta.cr.carnasagameswebsiteandapi.models.*;
 import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UserDto;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.FollowerRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.security.SecurityUser;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.UserServiceable;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
-public class UserServiceImpl implements UserServiceable {
+public class UserServiceImpl extends DefaultOAuth2UserService implements UserServiceable {
 
     private UserRepository userRepository;
     private FollowerRepository followerRepository;
@@ -31,6 +35,40 @@ public class UserServiceImpl implements UserServiceable {
         this.userRepository = userRepository;
         this.followerRepository = followerRepository;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    @Override
+    @Transactional
+    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+
+        OAuth2User oAuth2User = super.loadUser(userRequest);
+        Map<String, Object> attributes = oAuth2User.getAttributes();
+        String email = (String) attributes.get("email");
+        String username = (String) attributes.getOrDefault("username", "");
+
+        if(email==null || email.isEmpty()){
+            throw new InvalidUserException("Email not found in attributes");
+        }
+        if(username.isEmpty()){
+            username = generateUsernameFromEmail(email);
+        }
+
+        Optional<UserModel> optionalUser = getUserByEmail(email);
+        UserModel userModel;
+
+        if(optionalUser.isEmpty()){
+            username = generateUniqueUsername(username);
+            UserModel user = new UserModel();
+            user.setEmail(email);
+            user.setUsername(username);
+            user.setRoles("ROLE_USER");
+            user.setPrivate(false);
+            userModel = userRepository.save(user);
+        }
+        else {
+            userModel = optionalUser.get();
+        }
+        return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority(userModel.getRoles())), attributes, "email");
     }
 
     @Override
@@ -165,8 +203,6 @@ public class UserServiceImpl implements UserServiceable {
         return followerRepository.findAll();
     }
 
-    //user is who following, follower is a follower
-
     public List<FollowerModel> getAllFollowersByUserId(Long userId) {
         return getAllFollowers().stream().filter(followerModel -> followerModel.getUser().getId().equals(userId)).toList();
     }
@@ -283,11 +319,29 @@ public class UserServiceImpl implements UserServiceable {
     private boolean emailExists(UserModel user) {
         return getUserByEmail(user.getEmail().toLowerCase()).isEmpty();
     }
-    private boolean validateUserDetails(UserModel user) {
-        return validateEmail(user.getEmail()) && validatePassword(user.getPassword());
-    }
     private UserModel encryptPassword(UserModel user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return user;
+    }
+    private String generateUsernameFromEmail(String email) {
+        String baseUsername = email.split("@")[0];
+        baseUsername = baseUsername.replaceAll("[^a-zA-Z0-9_-]", "");
+        if (!baseUsername.matches("[a-zA-Z0-9_-]{3,20}$")) {
+            baseUsername = "user" + System.currentTimeMillis(); // Fallback username
+        }
+        return baseUsername;
+    }
+
+    private String generateUniqueUsername(String baseUsername) {
+        String updatedUsername = baseUsername;
+        int counter = 0;
+        while (getUserByUsername(updatedUsername).isPresent()) {
+            updatedUsername = baseUsername + "_" + counter;
+            counter++;
+            if(updatedUsername.length()>30){
+                throw new InvalidUsernameException(updatedUsername);
+            }
+        }
+        return updatedUsername;
     }
 }
