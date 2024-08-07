@@ -125,11 +125,17 @@ public class CommentController {
     }
 
     private Link getUserLink(CommentModel commentModel){
-        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(commentModel.getUserModel().getId())).withRel("User: " + commentModel.getUserModel().getUsername());
+        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder
+                .methodOn(UserApiController.class)
+                .getUserById(commentModel.getUserModel().getId()))
+                .withRel("User: " + commentModel.getUserModel().getUsername());
     }
 
     private Link getGameLink(CommentModel commentModel){
-        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getGameById(commentModel.getGamesModel().getId())).withRel("Game: " + commentModel.getGamesModel().getTitle());
+        return WebMvcLinkBuilder
+                .linkTo(WebMvcLinkBuilder
+                .methodOn(GameController.class).getGameById(commentModel.getGamesModel().getId()))
+                .withRel("Game: " + commentModel.getGamesModel().getTitle());
     }
 
     private EntityModel<CommentModel> getCommentEntityModel(CommentModel commentModel) {
