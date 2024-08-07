@@ -2,6 +2,7 @@ package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidTitleException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
@@ -141,7 +142,7 @@ public class GameServiceImpl implements GameServicable {
         }
         GameModel beforeUpdate = getGame(game.getId()).get();
         if(beforeUpdate.getTimesPlayed()>game.getTimesPlayed()){
-            return false; //cant decrease times played exception
+            throw new InvalidGameException("Cannot update game with ID: " + game.getId() + " times played cannot decrease");
         }
 
         if(!beforeUpdate.getTitle().equals(game.getTitle())){
