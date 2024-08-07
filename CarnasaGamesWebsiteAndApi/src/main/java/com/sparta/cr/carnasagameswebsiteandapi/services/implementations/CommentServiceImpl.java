@@ -119,7 +119,7 @@ public class CommentServiceImpl implements CommentServiceable {
             endDateDate = LocalDate.parse(endDate);
         }
         else {
-            throw new InvalidDateException("Dates must be in format yyyy-MM-dd!");
+            throw new InvalidDateException("Dates must be a valid date and in format yyyy-MM-dd!");
         }
         if(startDateDate.isAfter(endDateDate)){
             throw new InvalidDateException("Start date must be before end date!");
