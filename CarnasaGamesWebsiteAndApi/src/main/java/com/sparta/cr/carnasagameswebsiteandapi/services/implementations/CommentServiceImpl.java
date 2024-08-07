@@ -6,6 +6,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.Model
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidDateException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.CommentRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.CommentServiceable;

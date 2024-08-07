@@ -222,7 +222,7 @@ public class UserServiceImpl implements UserServiceable {
         return email.matches("^([a-zA-Z0-9_\\-.]+)@([a-z0-9_\\-.]+)\\.([a-zA-Z]{2,5})$");
     }
     private boolean emailExists(UserModel user) {
-        return getUserByEmail(user.getEmail()).isEmpty();
+        return getUserByEmail(user.getEmail().toLowerCase()).isEmpty();
     }
     private boolean validateUserDetails(UserModel user) {
         return validateEmail(user.getEmail()) && validatePassword(user.getPassword());
