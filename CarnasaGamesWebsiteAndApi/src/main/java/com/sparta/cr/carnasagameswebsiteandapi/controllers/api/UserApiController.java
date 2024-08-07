@@ -3,6 +3,7 @@ package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UsernameNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
+import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UserDto;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.CommentServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.HighScoreServiceImpl;
@@ -37,40 +38,40 @@ public class UserApiController {
     }
 
     @GetMapping("/search/all")
-    public ResponseEntity<CollectionModel<EntityModel<UserModel>>> getAllUsers() {
-        List<EntityModel<UserModel>> allUsers = userService.getAllUsers().stream().map(this::getUserEntityModel).toList();
+    public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAllUsers() {
+        List<EntityModel<UserDto>> allUsers = userService.getAllUserDtos().stream().map(this::getUserEntityModel).toList();
         return new ResponseEntity<>(CollectionModel.of(allUsers,WebMvcLinkBuilder
                 .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers())
                 .withSelfRel()), HttpStatus.OK);
     }
 
     @GetMapping("/search/id/{userId}")
-    public ResponseEntity<EntityModel<UserModel>> getUserById(@PathVariable Long userId) {
-        if(userService.getUser(userId).isEmpty()) {
+    public ResponseEntity<EntityModel<UserDto>> getUserById(@PathVariable Long userId) {
+        if(userService.getUserDtoByUserId(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
         }
-        UserModel userModel = userService.getUser(userId).get();
-        return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
+        UserDto userDto = userService.getUserDtoByUserId(userId).get();
+        return new ResponseEntity<>(getUserEntityModel(userDto),HttpStatus.OK);
     }
 
     @GetMapping("/search/name/{username}")
-    public ResponseEntity<EntityModel<UserModel>> getUserByName(@PathVariable String username) {
-        if(userService.getUserByUsername(username).isEmpty()) {
+    public ResponseEntity<EntityModel<UserDto>> getUserByName(@PathVariable String username) {
+        if(userService.getUserDtoByUsername(username).isEmpty()) {
             throw new UsernameNotFoundException(username);
         }
-        UserModel userModel = userService.getUserByUsername(username).get();
-        return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
+        UserDto userDto = userService.getUserDtoByUsername(username).get();
+        return new ResponseEntity<>(getUserEntityModel(userDto),HttpStatus.OK);
     }
 
     @PostMapping("/new")
-    public ResponseEntity<EntityModel<UserModel>> createUser(@RequestBody UserModel userModel) {
+    public ResponseEntity<EntityModel<UserDto>> createUser(@RequestBody UserModel userModel) {
         if(!userService.validateNewUser(userModel)){
             return ResponseEntity.badRequest().build();
         }
         UserModel newUser = userService.createUser(userModel);
         URI location = URI.create("/api/users/search/id/"+newUser.getId());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(newUser.getId())).withSelfRel();
-        return ResponseEntity.created(location).body(EntityModel.of(newUser).add(selfLink));
+        return ResponseEntity.created(location).body(EntityModel.of(userService.convertUserToDto(newUser)).add(selfLink));
     }
 
     @PutMapping("/update/{userId}")
@@ -96,7 +97,7 @@ public class UserApiController {
         return ResponseEntity.noContent().build();
     }
 
-    private List<Link> getCommentsLinks(UserModel user) {
+    private List<Link> getCommentsLinks(UserDto user) {
         return commentService
                 .getCommentsByUser(user.getId())
                 .stream()
@@ -107,7 +108,7 @@ public class UserApiController {
                 .toList();
     }
 
-    private List<Link> getGamesLinks(UserModel user) {
+    private List<Link> getGamesLinks(UserDto user) {
         return gameService
                 .getGamesByCreatorId(user.getId())
                 .stream()
@@ -118,7 +119,7 @@ public class UserApiController {
                 .toList();
     }
 
-    private List<Link> getScoresLinks(UserModel user) {
+    private List<Link> getScoresLinks(UserDto user) {
         return highScoreService.getHighScoresByUser(user.getId())
                 .stream()
                 .map(score ->
@@ -128,7 +129,7 @@ public class UserApiController {
                 .toList();
     }
 
-    private List<Link> getFollowersLinks(UserModel user) {
+    private List<Link> getFollowersLinks(UserDto user) {
         return userService.getAllFollowersByUserId(user.getId())
                 .stream()
                 .map(follower ->
@@ -137,7 +138,7 @@ public class UserApiController {
                                         "Follower: " + follower.getFollower().getUsername())
                                 ).toList();
     }
-    private List<Link> getFollowingLinks(UserModel user) {
+    private List<Link> getFollowingLinks(UserDto user) {
         return userService.getAllFollowingByUserId(user.getId())
                 .stream()
                 .map(follower ->
@@ -147,7 +148,7 @@ public class UserApiController {
                 ).toList();
     }
 
-    private EntityModel<UserModel> getUserEntityModel(UserModel userModel) {
+    private EntityModel<UserDto> getUserEntityModel(UserDto userModel) {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userModel.getId())).withSelfRel();
         return EntityModel.of(userModel, selfLink).add(getCommentsLinks(userModel)).add(getGamesLinks(userModel)).add(getScoresLinks(userModel)).add(getFollowersLinks(userModel)).add(getFollowingLinks(userModel));
     }

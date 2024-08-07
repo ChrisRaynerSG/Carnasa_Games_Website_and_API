@@ -5,6 +5,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.*;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModelId;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
+import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UserDto;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.FollowerRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.UserServiceable;
@@ -39,6 +40,16 @@ public class UserServiceImpl implements UserServiceable {
         return getAllUsers().stream().filter(userModel -> userModel.getUsername().contains(name)).toList();
     }
 
+    public List<UserDto> getAllUserDtos() {
+        return getAllUsers().stream().map(user -> new UserDto(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getProfileImage(),
+                user.getDescription(),
+                user.getRoles())).toList();
+    }
+
     @Override
     public Optional<UserModel> getUserByUsername(String username) {
         List<UserModel> users = getAllUsers();
@@ -48,6 +59,41 @@ public class UserServiceImpl implements UserServiceable {
             }
         }
         return Optional.empty();
+    }
+    public Optional<UserDto> getUserDtoByUsername(String username) {
+        List<UserModel> users = getAllUsers();
+        for (UserModel user : users) {
+            if (user.getUsername().equals(username)) {
+                return Optional.of(user).map(userToMap -> new UserDto(
+                        userToMap.getId(),
+                        userToMap.getUsername(),
+                        userToMap.getEmail(),
+                        userToMap.getProfileImage(),
+                        userToMap.getDescription(),
+                        userToMap.getRoles()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    public UserDto convertUserToDto(UserModel user) {
+        return new UserDto(user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getProfileImage(),
+                user.getDescription(),
+                user.getRoles());
+    }
+
+    public Optional<UserDto> getUserDtoByUserId(Long userId) {
+        return userRepository.findById(userId).map(
+                user -> new UserDto(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getProfileImage(),
+                        user.getDescription(),
+                        user.getRoles()));
     }
 
     @Override
