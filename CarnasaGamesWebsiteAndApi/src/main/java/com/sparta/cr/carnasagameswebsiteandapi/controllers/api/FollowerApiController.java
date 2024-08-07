@@ -26,7 +26,7 @@ public class FollowerApiController {
         this.userService = userService;
     }
 
-    @GetMapping("search/id/{userId}/following")
+    @GetMapping("/search/id/{userId}/following")
     public ResponseEntity<CollectionModel<EntityModel<FollowerModel>>> getAllFollowingByUserId(@PathVariable("userId") Long userId){
         List<EntityModel<FollowerModel>> following = userService.getAllFollowingByUserId(userId).stream().map( followerModel ->
                 getUserEntityModel(followerModel).add(getUserLink(followerModel))
@@ -34,12 +34,20 @@ public class FollowerApiController {
         return ResponseEntity.ok(CollectionModel.of(following));
     }
 
-    @GetMapping("search/id/{userId}/followers")
+    @GetMapping("/search/id/{userId}/followers")
     public ResponseEntity<CollectionModel<EntityModel<FollowerModel>>> getAllFollowersByUserId(@PathVariable("userId") Long userId){
         List<EntityModel<FollowerModel>> followers = userService.getAllFollowersByUserId(userId).stream().map( followerModel ->
                 getUserEntityModel(followerModel).add(getFollowerLink(followerModel))
         ).toList();
         return ResponseEntity.ok(CollectionModel.of(followers));
+    }
+
+    @GetMapping("/search/id/{userId}/followers/number")
+    public ResponseEntity<Long> getFollowersNumberByUserId(@PathVariable("userId") Long userId){
+        if(userService.getUser(userId).isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return ResponseEntity.ok(userService.getNumberOfFollowersByUserId(userId));
     }
 
     @PostMapping("/new/follower")
@@ -50,14 +58,20 @@ public class FollowerApiController {
     }
 
     @DeleteMapping("/delete/follower/{userId}/{followerId}")
-
+    public ResponseEntity<EntityModel<FollowerModel>> deleteFollower(@PathVariable Long userId, @PathVariable Long followerId){
+        if(userService.getUser(userId).isEmpty()||userService.getUser(followerId).isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        userService.unfollowUser(userId, followerId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 
 
     private Link getUserLink(FollowerModel followerModel) {
         return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getUser().getId())).withRel("Following: " + followerModel.getUser().getUsername());
     }
     private Link getFollowerLink(FollowerModel followerModel) {
-        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getFollower().getId())).withRel("Follower: " + followerModel.getUser().getUsername());
+        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getFollower().getId())).withRel("Follower: " + followerModel.getFollower().getUsername());
     }
 
     private EntityModel<FollowerModel> getUserEntityModel(FollowerModel followerModel) {
