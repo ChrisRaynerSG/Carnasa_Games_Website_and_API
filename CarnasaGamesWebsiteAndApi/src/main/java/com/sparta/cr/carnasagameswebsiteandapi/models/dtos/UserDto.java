@@ -9,8 +9,9 @@ public class UserDto {
     private final String profileImage;
     private final String description;
     private final String roles;
+    private final boolean isPrivate;
 
-    public UserDto(Long id, String username, String email, String profileImage, String description, String roles){
+    public UserDto(Long id, String username, String email, String profileImage, String description, String roles, boolean isPrivate){
 
         this.id = id;
         this.username = username;
@@ -18,6 +19,7 @@ public class UserDto {
         this.profileImage = profileImage;
         this.description = description;
         this.roles = roles;
+        this.isPrivate = isPrivate;
     }
 
     public long getId() {
@@ -42,6 +44,10 @@ public class UserDto {
 
     public String getRoles() {
         return roles;
+    }
+
+    public boolean isPrivate() {
+        return isPrivate;
     }
 
     @Override

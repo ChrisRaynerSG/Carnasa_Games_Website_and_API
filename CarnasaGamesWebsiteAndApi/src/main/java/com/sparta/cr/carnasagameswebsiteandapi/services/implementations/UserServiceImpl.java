@@ -47,7 +47,9 @@ public class UserServiceImpl implements UserServiceable {
                 user.getEmail(),
                 user.getProfileImage(),
                 user.getDescription(),
-                user.getRoles())).toList();
+                user.getRoles(),
+                user.isPrivate()
+        )).toList();
     }
 
     @Override
@@ -70,7 +72,8 @@ public class UserServiceImpl implements UserServiceable {
                         userToMap.getEmail(),
                         userToMap.getProfileImage(),
                         userToMap.getDescription(),
-                        userToMap.getRoles()));
+                        userToMap.getRoles(),
+                        user.isPrivate()));
             }
         }
         return Optional.empty();
@@ -82,7 +85,8 @@ public class UserServiceImpl implements UserServiceable {
                 user.getEmail(),
                 user.getProfileImage(),
                 user.getDescription(),
-                user.getRoles());
+                user.getRoles(),
+                user.isPrivate());
     }
 
     public Optional<UserDto> getUserDtoByUserId(Long userId) {
@@ -93,7 +97,8 @@ public class UserServiceImpl implements UserServiceable {
                         user.getEmail(),
                         user.getProfileImage(),
                         user.getDescription(),
-                        user.getRoles()));
+                        user.getRoles(),
+                        user.isPrivate()));
     }
 
     @Override
