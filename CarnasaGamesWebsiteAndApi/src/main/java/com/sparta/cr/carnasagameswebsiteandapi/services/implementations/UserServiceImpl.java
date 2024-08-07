@@ -77,9 +77,6 @@ public class UserServiceImpl implements UserServiceable {
         if(!validateExistingUserUpdate(user)){
             return null;
         }
-        if(passwordEncoder.matches(user.getPassword(), beforeUpdate.getPassword())){
-            return userRepository.save(user);
-        }
         else {
             return userRepository.save(encryptPassword(user));
         }

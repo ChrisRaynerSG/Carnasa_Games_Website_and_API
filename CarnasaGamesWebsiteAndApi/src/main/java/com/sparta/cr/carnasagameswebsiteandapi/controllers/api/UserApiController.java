@@ -81,9 +81,8 @@ public class UserApiController {
         if(!userModel.getId().equals(userId)) {
             return ResponseEntity.badRequest().build();
         }
-        if(!userService.validateExistingUserUpdate(userModel)){
-            return ResponseEntity.badRequest().build();
-        }
+
+        userService.validateExistingUserUpdate(userModel);
         userService.updateUser(userModel);
         return ResponseEntity.noContent().build();
     }
