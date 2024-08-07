@@ -81,9 +81,8 @@ public class UserApiController {
         if(!userModel.getId().equals(userId)) {
             return ResponseEntity.badRequest().build();
         }
-        if(!userService.validateExistingUserUpdate(userModel)){
-            return ResponseEntity.badRequest().build();
-        }
+
+        userService.validateExistingUserUpdate(userModel);
         userService.updateUser(userModel);
         return ResponseEntity.noContent().build();
     }
@@ -124,13 +123,32 @@ public class UserApiController {
                 .stream()
                 .map(score ->
                         WebMvcLinkBuilder
-                                .linkTo(WebMvcLinkBuilder.methodOn(HighScoreController.class).getScoreById(score.getScoreId()))
+                                .linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getGameById(score.getGamesModel().getId()))
                                 .withRel("Score: " + score.getScore() + " Game: " + score.getGamesModel().getTitle()))
                 .toList();
     }
 
+    private List<Link> getFollowersLinks(UserModel user) {
+        return userService.getAllFollowersByUserId(user.getId())
+                .stream()
+                .map(follower ->
+                        WebMvcLinkBuilder
+                                .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(follower.getFollower().getId())).withRel(
+                                        "Follower: " + follower.getFollower().getUsername())
+                                ).toList();
+    }
+    private List<Link> getFollowingLinks(UserModel user) {
+        return userService.getAllFollowingByUserId(user.getId())
+                .stream()
+                .map(follower ->
+                        WebMvcLinkBuilder
+                                .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(follower.getUser().getId())).withRel(
+                                        "Following: " + follower.getUser().getUsername())
+                ).toList();
+    }
+
     private EntityModel<UserModel> getUserEntityModel(UserModel userModel) {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userModel.getId())).withSelfRel();
-        return EntityModel.of(userModel, selfLink).add(getCommentsLinks(userModel)).add(getGamesLinks(userModel)).add(getScoresLinks(userModel));
+        return EntityModel.of(userModel, selfLink).add(getCommentsLinks(userModel)).add(getGamesLinks(userModel)).add(getScoresLinks(userModel)).add(getFollowersLinks(userModel)).add(getFollowingLinks(userModel));
     }
 }

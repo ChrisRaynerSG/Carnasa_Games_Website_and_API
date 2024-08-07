@@ -1,6 +1,6 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentNotFoundException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.CommentServiceImpl;
@@ -53,7 +53,7 @@ public class CommentController {
     @GetMapping("/search/game/{gameId}")
     public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByGame(@PathVariable Long gameId) {
         if(gameService.getGame(gameId).isEmpty()) {
-            throw new CommentNotFoundException("Game with ID: " + gameId + " not found");
+            throw new ModelNotFoundException("Game with ID: " + gameId + " not found");
         }
        List<EntityModel<CommentModel>> comments = commentService.getCommentsByGame(gameId).stream().map(this::getCommentEntityModel).toList();
        if(comments.isEmpty()) {
@@ -125,11 +125,17 @@ public class CommentController {
     }
 
     private Link getUserLink(CommentModel commentModel){
-        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(commentModel.getUserModel().getId())).withRel("User: " + commentModel.getUserModel().getUsername());
+        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder
+                .methodOn(UserApiController.class)
+                .getUserById(commentModel.getUserModel().getId()))
+                .withRel("User: " + commentModel.getUserModel().getUsername());
     }
 
     private Link getGameLink(CommentModel commentModel){
-        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getGameById(commentModel.getGamesModel().getId())).withRel("Game: " + commentModel.getGamesModel().getTitle());
+        return WebMvcLinkBuilder
+                .linkTo(WebMvcLinkBuilder
+                .methodOn(GameController.class).getGameById(commentModel.getGamesModel().getId()))
+                .withRel("Game: " + commentModel.getGamesModel().getTitle());
     }
 
     private EntityModel<CommentModel> getCommentEntityModel(CommentModel commentModel) {

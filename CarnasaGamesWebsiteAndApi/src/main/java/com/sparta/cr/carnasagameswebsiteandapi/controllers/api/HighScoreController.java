@@ -1,6 +1,6 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentNotFoundException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.HighScoreModel;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.HighScoreServiceImpl;
@@ -55,7 +55,7 @@ public class HighScoreController {
     @GetMapping("/search/games/{gameId}")
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByGameId(@PathVariable Long gameId){
         if(gameService.getGame(gameId).isEmpty()){
-            throw new CommentNotFoundException("Game with id " + gameId + " does not exist");
+            throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByGame(gameId).stream().map(this::getHighScoreEntityModel).toList();
         if(highScores.isEmpty()){
@@ -66,7 +66,7 @@ public class HighScoreController {
     @GetMapping("/search/users/{userId}")
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByUserId(@PathVariable Long userId){
         if(userService.getUser(userId).isEmpty()){
-            throw new CommentNotFoundException("User with id " + userId + " does not exist");
+            throw new ModelNotFoundException("User with id " + userId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByUser(userId).stream().map(this::getHighScoreEntityModel).toList();
         if(highScores.isEmpty()){
@@ -77,7 +77,7 @@ public class HighScoreController {
     @GetMapping("/search/games/{gameId}/top10")
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getTop10HighScoresForGame(@PathVariable Long gameId){
         if(gameService.getGame(gameId).isEmpty()){
-            throw new CommentNotFoundException("Game with id " + gameId + " does not exist");
+            throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getTop10HighScoresByGame(gameId).stream().map(this::getHighScoreEntityModel).toList();
         if(highScores.isEmpty()){
@@ -88,7 +88,7 @@ public class HighScoreController {
     @GetMapping("/search/games/{gameId}/top10today")
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getTop10HighScoresForGameToday(@PathVariable Long gameId){
         if(gameService.getGame(gameId).isEmpty()){
-            throw new CommentNotFoundException("Game with id " + gameId + " does not exist");
+            throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresToday(gameId, LocalDate.now()).stream().map(this::getHighScoreEntityModel).toList();
         if(highScores.isEmpty()){
@@ -99,10 +99,10 @@ public class HighScoreController {
     @GetMapping("/search/games/{gameId}/users/{userId}")
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByUserIdForGame(@PathVariable Long gameId, @PathVariable Long userId){
         if(gameService.getGame(gameId).isEmpty()){
-            throw new CommentNotFoundException("Game with id " + gameId + " does not exist");
+            throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
         if(userService.getUser(userId).isEmpty()){
-            throw new CommentNotFoundException("User with id " + userId + " does not exist");
+            throw new ModelNotFoundException("User with id " + userId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByGameAndUser(userId, gameId).stream().map(this::getHighScoreEntityModel).toList();
         if(highScores.isEmpty()){

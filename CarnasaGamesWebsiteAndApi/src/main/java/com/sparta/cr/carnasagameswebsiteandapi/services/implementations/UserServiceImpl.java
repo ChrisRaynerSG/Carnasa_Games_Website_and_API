@@ -1,6 +1,11 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.*;
+import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModel;
+import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModelId;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
+import com.sparta.cr.carnasagameswebsiteandapi.repositories.FollowerRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.UserServiceable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +19,13 @@ import java.util.Optional;
 public class UserServiceImpl implements UserServiceable {
 
     private UserRepository userRepository;
+    private FollowerRepository followerRepository;
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, FollowerRepository followerRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.followerRepository = followerRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -65,6 +72,7 @@ public class UserServiceImpl implements UserServiceable {
             return null;
         }
         user.setRoles("ROLE_USER");
+        user.setEmail(user.getEmail().toLowerCase());
         return userRepository.save(encryptPassword(user));
     }
 
@@ -73,14 +81,11 @@ public class UserServiceImpl implements UserServiceable {
         if(getUser(user.getId()).isEmpty()){
             return null;
         }
-        UserModel beforeUpdate = getUser(user.getId()).get();
         if(!validateExistingUserUpdate(user)){
             return null;
         }
-        if(passwordEncoder.matches(user.getPassword(), beforeUpdate.getPassword())){
-            return userRepository.save(user);
-        }
         else {
+            user.setEmail(user.getEmail().toLowerCase());
             return userRepository.save(encryptPassword(user));
         }
         //todo validation for images and other fields
@@ -93,9 +98,68 @@ public class UserServiceImpl implements UserServiceable {
         return user.orElse(null);
     }
 
+    public Optional<FollowerModel> getFollowerModelById(FollowerModelId followerModelId) {
+        return followerRepository.findById(followerModelId);
+    }
+
+    public List<FollowerModel> getAllFollowers() {
+        return followerRepository.findAll();
+    }
+
+    //user is who following, follower is a follower
+
+    public List<FollowerModel> getAllFollowersByUserId(Long userId) {
+        return getAllFollowers().stream().filter(followerModel -> followerModel.getUser().getId().equals(userId)).toList();
+    }
+
+    public List<FollowerModel> getAllFollowingByUserId(Long userId) {
+        return getAllFollowers().stream().filter(followerModel -> followerModel.getFollower().getId().equals(userId)).toList();
+    }
+
+    public Long getNumberOfFollowersByUserId(Long userId) {
+        return getAllFollowers().stream().filter(followerModel -> followerModel.getUser().getId().equals(userId)).count();
+    }
+
+    public FollowerModel followNewUser(FollowerModel followerModel) {
+        if(validateNewFollower(followerModel)){
+            return followerRepository.save(followerModel);
+        }
+        return null;
+    }
+
+    public FollowerModel unfollowUser(Long userId, Long followerId) {
+        FollowerModelId followerModelId = new FollowerModelId();
+        followerModelId.setFollower_id(followerId);
+        followerModelId.setUser_id(userId);
+        if(getFollowerModelById(followerModelId).isPresent()){
+            FollowerModel followerModel = getFollowerModelById(followerModelId).get();
+            followerRepository.delete(followerModel);
+            return followerModel;
+        }
+        else {
+            throw new UserNotFoundException("Unable to unfollow user with id: " + userId + " by user id: " + followerId + "as follower relationship not found");
+        }
+    }
+
+    public boolean validateNewFollower(FollowerModel followerModel) {
+        if(getUser(followerModel.getFollower().getId()).isEmpty()){
+            throw new UserNotFoundException(followerModel.getFollower().getId().toString());
+        }
+        if(getUser(followerModel.getUser().getId()).isEmpty()){
+            throw new UserNotFoundException(followerModel.getUser().getId().toString());
+        }
+        if(followerModel.getFollower().getId().equals(followerModel.getUser().getId())){
+            throw new InvalidUserException("You cannot follow yourself");
+        }
+        if(getFollowerModelById(followerModel.getId()).isPresent()){
+            throw new InvalidUserException("You are already following user: " + followerModel.getUser().getUsername());
+        }
+        return true;
+    }
+
     public boolean validateNewUser(UserModel user){
         if(getUser(user.getId()).isPresent()){
-            throw new UserAlreadyExistsException(user.getId().toString());
+            throw new ModelAlreadyExistsException("Cannot create new User with ID: " + user.getId() + " already exists");
         }
         else if(!validateUsername(user.getUsername())){
             throw new InvalidUsernameException(user.getUsername());
@@ -117,7 +181,7 @@ public class UserServiceImpl implements UserServiceable {
 
     public boolean validateExistingUserUpdate(UserModel user){
         if(getUser(user.getId()).isEmpty()){
-            return false;
+            throw new ModelAlreadyExistsException("Cannot update User as ID: " + user.getId() + " does not exist");
         }
         UserModel beforeUpdate = getUser(user.getId()).get();
         if(!passwordEncoder.matches(user.getPassword(), beforeUpdate.getPassword())){
@@ -154,7 +218,8 @@ public class UserServiceImpl implements UserServiceable {
         return username.matches("[a-zA-Z0-9_-]{3,20}$");
     }
     private boolean validateEmail(String email) {
-        return email.matches("^([a-zA-Z0-9_\\-.]+)@([a-zA-Z0-9_\\-.]+)\\.([a-zA-Z]{2,5})$");
+        email = email.toLowerCase();
+        return email.matches("^([a-zA-Z0-9_\\-.]+)@([a-z0-9_\\-.]+)\\.([a-zA-Z]{2,5})$");
     }
     private boolean emailExists(UserModel user) {
         return getUserByEmail(user.getEmail()).isEmpty();

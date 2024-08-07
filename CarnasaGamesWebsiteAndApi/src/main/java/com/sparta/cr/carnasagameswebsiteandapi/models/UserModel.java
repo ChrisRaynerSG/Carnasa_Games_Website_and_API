@@ -1,10 +1,12 @@
 package com.sparta.cr.carnasagameswebsiteandapi.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.util.List;
+import java.util.Set;
 
 
 @Entity
@@ -36,6 +38,14 @@ public class UserModel {
 
     @Column(name = "roles", nullable = false)
     private String roles;
+
+//    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+//    @JsonManagedReference(value = "follower-user")
+//    private Set<FollowerModel> followers; //followers must be unique
+//
+//    @OneToMany(mappedBy = "follower", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+//    @JsonManagedReference(value = "follower-follower")
+//    private Set<FollowerModel> following; //cannot follow the same person more than once
 
     public Long getId() {
         return id;

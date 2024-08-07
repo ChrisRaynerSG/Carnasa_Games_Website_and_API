@@ -1,10 +1,10 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentMustHaveTextException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentNotFoundException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoGameException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.NoUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidDateException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.CommentRepository;
@@ -119,7 +119,7 @@ public class CommentServiceImpl implements CommentServiceable {
             endDateDate = LocalDate.parse(endDate);
         }
         else {
-            throw new InvalidDateException("Dates must be in format yyyy-MM-dd!");
+            throw new InvalidDateException("Dates must be a valid date and in format yyyy-MM-dd!");
         }
         if(startDateDate.isAfter(endDateDate)){
             throw new InvalidDateException("Start date must be before end date!");
@@ -142,13 +142,13 @@ public class CommentServiceImpl implements CommentServiceable {
     public boolean validateNewComment(CommentModel comment) {
 
         if(getComment(comment.getId()).isPresent()){
-            throw new CommentAlreadyExistsException("Cannot create new comment with ID: " + comment.getId() + " already exists");
+            throw new ModelAlreadyExistsException("Cannot create new comment with ID: " + comment.getId() + " already exists");
         }
         if(userService.getUser(comment.getUserModel().getId()).isEmpty()){
-            throw new NoUserException("Cannot create comment as user with ID: " + comment.getUserModel().getId()+" does not exist." );
+            throw new InvalidUserException("Cannot create comment as user with ID: " + comment.getUserModel().getId()+" does not exist." );
         }
         if(gameService.getGame(comment.getGamesModel().getId()).isEmpty()){
-            throw new NoGameException("Cannot create comment as game with ID: " + comment.getGamesModel().getId() + " does not exist." );
+            throw new InvalidGameException("Cannot create comment as game with ID: " + comment.getGamesModel().getId() + " does not exist." );
         }
         if(comment.getCommentText().isEmpty()){
             throw new CommentMustHaveTextException("Cannot create comment as comment must contain text");
@@ -158,14 +158,14 @@ public class CommentServiceImpl implements CommentServiceable {
 
     public boolean validateExistingComment(CommentModel comment) {
         if(getComment(comment.getId()).isEmpty()){
-            throw new CommentNotFoundException("Cannot update comment as ID: " + comment.getId() + " does not exist." );
+            throw new ModelNotFoundException("Cannot update comment as ID: " + comment.getId() + " does not exist." );
         }
         CommentModel beforeUpdate = getComment(comment.getId()).get();
         if(!beforeUpdate.getUserModel().getId().equals(comment.getUserModel().getId())){
-            throw new NoUserException("Cannot update comment as new user ID detected");
+            throw new InvalidUserException("Cannot update comment as new user ID detected");
         }
         if(!beforeUpdate.getGamesModel().getId().equals(comment.getGamesModel().getId())){
-            throw new NoGameException("Cannot update comment as new game ID detected");
+            throw new InvalidGameException("Cannot update comment as new game ID detected");
         }
         if(comment.getCommentText().isEmpty()){
             throw new CommentMustHaveTextException("Cannot update comment as comment must contain text, have you tried deleting?");
