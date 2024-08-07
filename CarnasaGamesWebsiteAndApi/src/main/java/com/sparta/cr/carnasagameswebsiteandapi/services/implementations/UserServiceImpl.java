@@ -62,6 +62,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
             user.setEmail(email);
             user.setUsername(username);
             user.setRoles("ROLE_USER");
+            user.setPassword("PlaceholderPasswordToNotBreakTheModel");
             user.setPrivate(false);
             userModel = userRepository.save(user);
         }
