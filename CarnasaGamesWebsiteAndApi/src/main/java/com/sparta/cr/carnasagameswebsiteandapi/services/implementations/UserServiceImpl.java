@@ -45,6 +45,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         Map<String, Object> attributes = oAuth2User.getAttributes();
         String email = (String) attributes.get("email");
         String username = (String) attributes.getOrDefault("username", "");
+        String profileUrl = (String) attributes.getOrDefault("profileUrl", "");
 
         if(email==null || email.isEmpty()){
             throw new InvalidUserException("Email not found in attributes");
@@ -62,6 +63,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
             user.setEmail(email);
             user.setUsername(username);
             user.setRoles("ROLE_USER");
+            user.setProfileImage(profileUrl);
             user.setPassword("PlaceholderPasswordToNotBreakTheModel");
             user.setPrivate(false);
             userModel = userRepository.save(user);

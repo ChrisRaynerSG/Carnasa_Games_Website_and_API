@@ -1,0 +1,74 @@
+.register-form {
+    max-width: 700px;
+    margin: auto auto 40px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.register-form .card-header {
+    background-color: #ff6600; /* Orange color */
+    color: #fff;
+    border-radius: 10px 10px 0 0;
+}
+.btn-orange {
+    background-color: #ff6600;
+    color: #fff;
+    border: none;
+}
+.btn-orange:hover {
+    background-color: #e65c00;
+}
+.btn-outline-secondary {
+    border-color: #e65c00;
+}
+
+.btn-outline-secondary .fa-eye, .btn-outline-secondary .fa-eye-slash {
+    color: #e65c00;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #e65c00;
+    border-color: #e65c00;
+}
+
+.btn-outline-secondary:hover .fa-eye, .btn-outline-secondary:hover .fa-eye-slash {
+    color: white;
+}
+
+body {
+    background: white;
+    color: #fff;
+}
+.card {
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #000;
+}
+.container {
+    flex: 1;
+}
+.footer {
+    background-color: black;
+    color: white;
+    padding: 20px 0;
+}
+.footer a {
+    color: white;
+}
+.footer .search-form {
+    max-width: 300px;
+    margin: 0 auto;
+}
+.footer .search-form .btn {
+    margin: 3px 0 3px 0;
+}
+
+.carousel-control-prev, .carousel-control-next {
+    width: 5%;
+}
+.carousel-control-prev {
+    left: -5%;
+}
+.carousel-control-next {
+    right: -5%;
+}

@@ -1,0 +1,74 @@
+.navbar {
+    background-color: #FF6600;
+}
+
+.navbar-dark .navbar-brand {
+    color: #ffffff;
+    font-family: 'Bebas Neue', cursive;
+    font-size: 32px;
+}
+
+.navbar .navbar-expand-lg .navbar-dark .bg-dark .sticky-top {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.navbar-brand {
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    margin-right: 0;
+    height: 40px;
+}
+
+.navbar-collapse .collapse {
+    margin-bottom: 5px;
+    margin-top: 6px;
+}
+
+.bar-push {
+    margin-top: 1px;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: #ffffff;
+}
+
+.navbar-dark .form-control {
+    background-color: #1e1e1e;
+    border: none;
+    color: #ffffff;
+}
+
+.navbar-dark .form-control::placeholder {
+    color: #a9a9a9;
+}
+
+.navbar-dark .btn-outline-success {
+    color: #ffffff;
+    border-color: #ff0000;
+}
+
+.navbar-dark .btn-outline-success:hover {
+    color: #ffffff;
+    background-color: #ff0006;
+    border-color: #ff0000;
+}
+
+.nav-item .btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+}
+
+.navbar-dark .nav-item .btn-login {
+    color: #ffffff;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+}
+
+.nav-link {
+    cursor: pointer;
+    color: white;
+}
