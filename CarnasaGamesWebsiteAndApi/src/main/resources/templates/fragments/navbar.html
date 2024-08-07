@@ -27,7 +27,16 @@
             <a class="nav-link" id="logoutButton" th:href="@{/logout}">Logout</a>
         </li>
         <li class="nav-item" sec:authorize="!hasRole('ROLE_USER') and !hasRole('ROLE_ADMIN')">
-            <a class="nav-link" id="loginButton"  th:href="@{/login}">Log in</a>
+            <a class="nav-link" id="loginButton" data-toggle="modal" data-target="#loginModal">Log in</a>
         </li>
     </ul>
 </nav>
+<div th:replace="~{fragments/login}"></div>
+<script>
+    $(document).ready(function(){
+        $('#loginLink').click(function(event) {
+            event.preventDefault();
+            $('#loginModal').modal('show');
+        });
+    });
+</script>

@@ -39,7 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
+                        .loginPage("/oauth2/authorization/google")
                         .defaultSuccessUrl("/home")
                         .userInfoEndpoint(userInfo -> userInfo.userService(userService)))
                 .logout(logout -> logout
