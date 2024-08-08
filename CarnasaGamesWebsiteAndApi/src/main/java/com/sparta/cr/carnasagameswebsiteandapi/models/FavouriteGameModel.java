@@ -69,4 +69,14 @@ public class FavouriteGameModel {
     public void setFavourite(boolean favourite) {
         isFavourite = favourite;
     }
+
+    @Override
+    public String toString() {
+        return "FavouriteGameModel{" +
+                ", gameModel=" + gameModel.getTitle() +
+                ", userModel=" + userModel.getUsername() +
+                ", numberOfVisits=" + numberOfVisits +
+                ", isFavourite=" + isFavourite +
+                '}';
+    }
 }
