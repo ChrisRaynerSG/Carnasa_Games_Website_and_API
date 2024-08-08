@@ -13,14 +13,14 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class FavouriteGameImpl {
+public class FavouriteGameServiceImpl {
 
     private final FavouriteGameRepository favouriteGameRepo;
     private final GameServiceImpl gameService;
     private final UserServiceImpl userService;
 
     @Autowired
-    public FavouriteGameImpl(FavouriteGameRepository favouriteGameRepo, GameServiceImpl gameService, UserServiceImpl userService) {
+    public FavouriteGameServiceImpl(FavouriteGameRepository favouriteGameRepo, GameServiceImpl gameService, UserServiceImpl userService) {
         this.favouriteGameRepo = favouriteGameRepo;
         this.gameService = gameService;
         this.userService = userService;
@@ -74,10 +74,13 @@ public class FavouriteGameImpl {
         return null;
     }
 
-    public FavouriteGameModel deleteFavouriteGame(FavouriteGameModelId favouriteGameModelId){
-        if(getFavouriteGame(favouriteGameModelId).isPresent()){
-            FavouriteGameModel relDeleted = getFavouriteGame(favouriteGameModelId).get();
-            favouriteGameRepo.deleteById(favouriteGameModelId);
+    public FavouriteGameModel deleteFavouriteGame(Long userId, Long gameId){
+        FavouriteGameModelId gameIdToDelete = new FavouriteGameModelId();
+        gameIdToDelete.setGameId(gameId);
+        gameIdToDelete.setUserId(userId);
+        if(getFavouriteGame(gameIdToDelete).isPresent()){
+            FavouriteGameModel relDeleted = getFavouriteGame(gameIdToDelete).get();
+            favouriteGameRepo.deleteById(gameIdToDelete);
             return relDeleted;
         }
         return null;

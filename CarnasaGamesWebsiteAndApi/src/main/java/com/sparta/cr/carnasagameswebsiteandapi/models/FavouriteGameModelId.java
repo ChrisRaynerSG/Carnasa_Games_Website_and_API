@@ -16,20 +16,20 @@ public class FavouriteGameModelId {
     private long userId;
 
     @NotNull
-    public long getGameId() {
+    public Long getGameId() {
         return gameId;
     }
 
-    public void setGameId(@NotNull long gameId) {
+    public void setGameId(@NotNull Long gameId) {
         this.gameId = gameId;
     }
 
     @NotNull
-    public long getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(@NotNull long userId) {
+    public void setUserId(@NotNull Long userId) {
         this.userId = userId;
     }
 }
