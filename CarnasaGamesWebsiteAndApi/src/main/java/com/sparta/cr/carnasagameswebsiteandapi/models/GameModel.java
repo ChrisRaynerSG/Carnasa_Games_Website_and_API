@@ -27,11 +27,18 @@ public class GameModel {
     @Column(name = "is_published", nullable = false)
     private Boolean isPublished;
 
-    @Column(name = "genre", nullable = false)
-    private String genre;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "genre")
+    private GenreModel genre;
 
     @Column(name = "times_played")
     private Integer timesPlayed;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "image")
+    private String image;
 
     public Long getId() {
         return id;
@@ -65,11 +72,11 @@ public class GameModel {
         isPublished = published;
     }
 
-    public String getGenre() {
+    public GenreModel getGenre() {
         return genre;
     }
 
-    public void setGenre(String genre) {
+    public void setGenre(GenreModel genre) {
         this.genre = genre;
     }
 
