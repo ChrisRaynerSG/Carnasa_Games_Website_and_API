@@ -31,20 +31,16 @@ public class GameServiceImpl implements GameServicable {
 
     @Override
     public GameModel createGame(GameModel game) {
-        if(validateNewGame(game)){
-            game.setCreator(userServiceImpl.getUser(game.getCreator().getId()).get()); //isPresent done in validate game...
-            game.setPublished(false);
-            game.setTimesPlayed(0);
-            return gameRepository.save(game);
-        }
-        else return null;
+        validateNewGame(game);
+        game.setCreator(userServiceImpl.getUser(game.getCreator().getId()).get()); //isPresent done in validate game...
+        game.setPublished(false);
+        game.setTimesPlayed(0);
+        return gameRepository.save(game);
     }
 
     @Override
     public GameModel updateGame(GameModel game) {
-        if(getGame(game.getId()).isEmpty()) {
-            return null;
-        }
+        validateExistingGame(game);
         return gameRepository.save(game);
     }
 
@@ -156,11 +152,8 @@ public class GameServiceImpl implements GameServicable {
                 throw new InvalidGenreException(game.getGenre().getGenre());
             }
         }
-
-        if(!beforeUpdate.getCreator().getId().equals(game.getCreator().getId())){
-            if(userServiceImpl.getUser(game.getCreator().getId()).isEmpty()){
-                throw new InvalidUserException("cannot update game with no creator");
-            }
+        if(userServiceImpl.getUser(game.getCreator().getId()).isEmpty()){
+            throw new InvalidUserException("cannot update game with no creator");
         }
         return true;
     }

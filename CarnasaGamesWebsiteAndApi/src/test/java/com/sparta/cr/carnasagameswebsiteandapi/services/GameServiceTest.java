@@ -1,7 +1,12 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services;
 
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.GameAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidTitleException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GenreModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
@@ -218,7 +223,7 @@ public class GameServiceTest {
         Assertions.assertTrue(gameOptional.isEmpty());
     }
     @Test
-    void testCreateNewGameReturnsNullIfGameAlreadyExists(){
+    void testCreateNewGameThrowsExceptionIfGameAlreadyExists(){
         GameModel gameModel = new GameModel();
         gameModel.setId(1234L);
         gameModel.setGenre(genreModel1);
@@ -227,6 +232,41 @@ public class GameServiceTest {
         when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel));
         when(userServiceImpl.getUser(1234L)).thenReturn(Optional.of(userModel1));
         assertThrows(ModelAlreadyExistsException.class, () -> gameServiceImpl.createGame(gameModel));
+    }
+    @Test
+    void testCreateNewGameThrowsExceptionIfCreatorDoesntExist(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
+        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.empty());
+        assertThrows(InvalidUserException.class, () -> gameServiceImpl.createGame(gameModel));
+    }
+    @Test
+    void testCreateNewGameThrowsExceptionIfGenreIsInvalid(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        GenreModel genreModel = new GenreModel();
+        genreModel.setGenre("Action");
+        gameModel.setGenre(genreModel);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
+        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.of(userModel1));
+        assertThrows(InvalidGenreException.class, () -> gameServiceImpl.createGame(gameModel));
+    }
+    @Test
+    void testCreateNewGameThrowsExceptionIfTitleIsInvalid(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("G^me-TitlE");
+        gameModel.setCreator(userModel1);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
+        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.of(userModel1));
+        assertThrows(InvalidTitleException.class, () -> gameServiceImpl.createGame(gameModel));
     }
     @Test
     void testCreateNewGameReturnsGameIfSuccessful(){
@@ -243,12 +283,62 @@ public class GameServiceTest {
         Assertions.assertNotNull(createdGame);
     }
     @Test
-    void testUpdateGameReturnsNullIfGameDoesNotExist(){
+    void testUpdateGameThrowsExceptionIfGameDoesNotExist(){
         GameModel gameModel = new GameModel();
         gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        gameModel.setTimesPlayed(1);
         when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
-        GameModel udpatedGame = gameServiceImpl.updateGame(gameModel);
-        Assertions.assertNull(udpatedGame);
+        assertThrows(ModelNotFoundException.class, () -> gameServiceImpl.updateGame(gameModel), "Cannot update game as ID: " + gameModel.getId() + " does not exist");
+    }
+    @Test
+    void testUpdateGameThrowsExceptionIfTimesPlayedDecreases(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        gameModel.setTimesPlayed(100);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        assertThrows(InvalidGameException.class, ()-> gameServiceImpl.updateGame(gameModel), "Cannot update game with ID: " + gameModel.getId() + " times played cannot decrease");
+    }
+    @Test
+    void testUpdateGameThrowsExceptionIfTitleIsInvalid(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("Game Title$£( SDFK;[[w");
+        gameModel.setCreator(userModel1);
+        gameModel.setTimesPlayed(10000);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        assertThrows(InvalidTitleException.class, ()-> gameServiceImpl.updateGame(gameModel));
+    }
+    @Test
+    void testUpdateGameThrowsExceptionIfGenreIsInvalid(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        GenreModel genreModel = new GenreModel();
+        genreModel.setGenre("Action");
+        gameModel.setGenre(genreModel);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        gameModel.setTimesPlayed(10000);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        assertThrows(InvalidGenreException.class, ()-> gameServiceImpl.updateGame(gameModel));
+    }
+    @Test
+    void testUpdateGameThrowsExceptionIfCreatorNotFound(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        gameModel.setTimesPlayed(10000);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        when(userServiceImpl.getUser(anyLong())).thenReturn(Optional.empty());
+        assertThrows(InvalidUserException.class, ()-> gameServiceImpl.updateGame(gameModel), "cannot update game with no creator");
     }
     @Test
     void testUpdateGameReturnsGameIfSuccessful(){
@@ -256,7 +346,10 @@ public class GameServiceTest {
         gameModel.setId(1234L);
         gameModel.setGenre(genreModel1);
         gameModel.setCreator(userModel1);
+        gameModel.setTitle("Game Title");
+        gameModel.setTimesPlayed(10000);
         when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        when(userServiceImpl.getUser(anyLong())).thenReturn(Optional.of(userModel1));
         when(gameRepository.save(any(GameModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
         GameModel updatedGame = gameServiceImpl.updateGame(gameModel);
         verify(gameRepository, times(1)).save(any(GameModel.class));
