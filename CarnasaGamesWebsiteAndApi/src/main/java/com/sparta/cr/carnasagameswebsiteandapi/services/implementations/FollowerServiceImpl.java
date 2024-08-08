@@ -1,6 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModelId;
@@ -62,7 +63,7 @@ public class FollowerServiceImpl {
             return followerModel;
         }
         else {
-            throw new UserNotFoundException("Unable to unfollow user with id: " + userId + " by user id: " + followerId + "as follower relationship not found");
+            throw new ModelNotFoundException("Unable to unfollow user with id: " + userId + " by user id: " + followerId + "as follower relationship not found");
         }
     }
 

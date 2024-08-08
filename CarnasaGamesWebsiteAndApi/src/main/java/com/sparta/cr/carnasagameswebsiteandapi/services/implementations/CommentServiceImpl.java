@@ -151,7 +151,7 @@ public class CommentServiceImpl implements CommentServiceable {
         if(gameService.getGame(comment.getGamesModel().getId()).isEmpty()){
             throw new InvalidGameException("Cannot create comment as game with ID: " + comment.getGamesModel().getId() + " does not exist." );
         }
-        if(comment.getCommentText().isEmpty()){
+        if(comment.getCommentText()==null||comment.getCommentText().isEmpty()){
             throw new CommentMustHaveTextException("Cannot create comment as comment must contain text");
         }
         return true;
@@ -168,7 +168,7 @@ public class CommentServiceImpl implements CommentServiceable {
         if(!beforeUpdate.getGamesModel().getId().equals(comment.getGamesModel().getId())){
             throw new InvalidGameException("Cannot update comment as new game ID detected");
         }
-        if(comment.getCommentText().isEmpty()){
+        if(comment.getCommentText()==null||comment.getCommentText().isEmpty()){
             throw new CommentMustHaveTextException("Cannot update comment as comment must contain text, have you tried deleting?");
         }
         return true;

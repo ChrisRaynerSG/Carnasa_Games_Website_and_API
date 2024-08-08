@@ -1,12 +1,14 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services;
 
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.commentexceptions.CommentMustHaveTextException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.*;
 import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.CommentRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.CommentServiceImpl;
+import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
+import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -26,6 +29,10 @@ public class CommentServiceTest {
 
     @Mock
     private CommentRepository commentRepository;
+    @Mock
+    private UserServiceImpl userService;
+    @Mock
+    private GameServiceImpl gameService;
 
     @InjectMocks
     private CommentServiceImpl commentService;
@@ -34,6 +41,10 @@ public class CommentServiceTest {
     private CommentModel comment1;
     private CommentModel comment2;
     private CommentModel comment3;
+    private UserModel user1;
+    private UserModel user2;
+    private GameModel game1;
+    private GameModel game2;
 
     @BeforeEach
     void setUp() {
@@ -42,12 +53,14 @@ public class CommentServiceTest {
         comment2 = new CommentModel();
         comment3 = new CommentModel();
 
-        GameModel game1 = new GameModel();
+        game1 = new GameModel();
         game1.setId(1L);
-        GameModel game2 = new GameModel();
+        game2 = new GameModel();
         game2.setId(2L);
-        UserModel user1 = new UserModel();
+        user1 = new UserModel();
         user1.setId(1L);
+        user2 = new UserModel();
+        user2.setId(2L);
 
         comment1.setGamesModel(game1);
         comment1.setUserModel(user1);
@@ -114,6 +127,13 @@ public class CommentServiceTest {
         Assertions.assertEquals(expected, actual);
     }
     @Test
+    public void testGetCommentsByDateThrowsExceptions(){
+        assertThrows(InvalidDateException.class, () -> commentService.getCommentsByDate("2220-12-25","2321-12-25"));
+        assertThrows(InvalidDateException.class, () -> commentService.getCommentsByDate("2000-12-25","1985-12-25"));
+        assertThrows(InvalidDateException.class, () -> commentService.getCommentsByDate("2000-1-1","2015-11-10"));
+        assertThrows(InvalidDateException.class, () -> commentService.getCommentsByDate("2020-02-30","2021-12-25"));
+    }
+    @Test
     public void testGetCommentsByDateTodayReturnsComments(){
         int expected = 1;
         when(commentRepository.findAll()).thenReturn(comments);
@@ -126,14 +146,55 @@ public class CommentServiceTest {
         comment.setId(1L);
         when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
         when(commentRepository.save(comment)).thenReturn(comment);
-        Assertions.assertThrows(ModelAlreadyExistsException.class, () -> commentService.createComment(comment));
+        assertThrows(ModelAlreadyExistsException.class, () -> commentService.createComment(comment));
+    }
+    @Test
+    void createCommentThrowsExceptionWhenUserNotFound(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        comment.setUserModel(user1);
+        comment.setGamesModel(game1);
+        when(commentRepository.findById(1L)).thenReturn(Optional.empty());
+        when(userService.getUser(1L)).thenReturn(Optional.empty());
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
+        when(commentRepository.save(comment)).thenReturn(comment);
+        assertThrows(InvalidUserException.class, () -> commentService.createComment(comment));
+    }
+    @Test
+    void createCommentThrowsExceptionWhenGameNotFound(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        comment.setUserModel(user1);
+        comment.setGamesModel(game1);
+        when(commentRepository.findById(1L)).thenReturn(Optional.empty());
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.empty());
+        when(commentRepository.save(comment)).thenReturn(comment);
+        assertThrows(InvalidGameException.class, () -> commentService.createComment(comment));
+    }
+    @Test
+    void createCommentThrowsExceptionWhenNoText(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        comment.setUserModel(user1);
+        comment.setGamesModel(game1);
+        when(commentRepository.findById(1L)).thenReturn(Optional.empty());
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
+        when(commentRepository.save(comment)).thenReturn(comment);
+        assertThrows(CommentMustHaveTextException.class, () -> commentService.createComment(comment));
     }
     @Test
     void createCommentReturnsNewComment(){
         CommentModel comment = new CommentModel();
         comment.setId(1L);
+        comment.setUserModel(user1);
+        comment.setGamesModel(game1);
+        comment.setCommentText("New comment");
         when(commentRepository.findById(1L)).thenReturn(Optional.empty());
         when(commentRepository.save(comment)).thenReturn(comment);
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
         CommentModel actual = commentService.createComment(comment);
         Assertions.assertNotNull(actual);
     }
@@ -143,18 +204,61 @@ public class CommentServiceTest {
         comment.setId(1L);
         when(commentRepository.findById(1L)).thenReturn(Optional.empty());
         when(commentRepository.save(comment)).thenReturn(comment);
-        Assertions.assertThrows(ModelNotFoundException.class, () -> commentService.updateComment(comment));
+        assertThrows(ModelNotFoundException.class, () -> commentService.updateComment(comment));
+    }
+    @Test
+    void updateCommentThrowsExceptionIfNoText(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        comment.setUserModel(user1);
+        comment.setDate(LocalDate.now());
+        comment.setGamesModel(game1);
+        when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
+        when(commentRepository.save(comment)).thenReturn(comment);
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
+        assertThrows(CommentMustHaveTextException.class, () -> commentService.updateComment(comment));
+    }
+    @Test
+    void updateCommentThrowsExceptionIfUserDifferent(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        comment.setUserModel(user2);
+        comment.setDate(LocalDate.now());
+        comment.setGamesModel(game1);
+        comment.setCommentText("New comment");
+        when(commentRepository.findById(1L)).thenReturn(Optional.of(comment1));
+        when(commentRepository.save(comment)).thenReturn(comment);
+        when(userService.getUser(2L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
+        assertThrows(InvalidUserException.class, () -> commentService.updateComment(comment));
+    }
+    @Test
+    void updateCommentThrowsExceptionIfGameDifferent(){
+        CommentModel comment = new CommentModel();
+        comment.setId(1L);
+        comment.setUserModel(user1);
+        comment.setDate(LocalDate.now());
+        comment.setGamesModel(game2);
+        comment.setCommentText("New comment");
+        when(commentRepository.findById(1L)).thenReturn(Optional.of(comment1));
+        when(commentRepository.save(comment)).thenReturn(comment);
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(2L)).thenReturn(Optional.of(game1));
+        assertThrows(InvalidGameException.class, () -> commentService.updateComment(comment));
     }
     @Test
     void updateCommentReturnsUpdatedComment(){
         CommentModel comment = new CommentModel();
         comment.setId(1L);
-        comment.setUserModel(new UserModel());
+        comment.setUserModel(user1);
         comment.setDate(LocalDate.now());
-        comment.setGamesModel(new GameModel());
+        comment.setGamesModel(game1);
         comment.setCommentText("example text");
         when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
         when(commentRepository.save(comment)).thenReturn(comment);
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
         CommentModel actual = commentService.updateComment(comment);
         Assertions.assertNotNull(actual);
     }
