@@ -25,7 +25,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/api/games")
-public class GameController {
+public class GameApiController {
 
     private final GameServiceImpl gameService;
     private final HighScoreServiceImpl highScoreService;
@@ -33,7 +33,7 @@ public class GameController {
     private final UserServiceImpl userService;
 
     @Autowired
-    public GameController(GameServiceImpl gameService, HighScoreServiceImpl highScoreService, CommentServiceImpl commentService, UserServiceImpl userService) {
+    public GameApiController(GameServiceImpl gameService, HighScoreServiceImpl highScoreService, CommentServiceImpl commentService, UserServiceImpl userService) {
         this.gameService = gameService;
         this.highScoreService = highScoreService;
         this.commentService = commentService;
@@ -46,7 +46,7 @@ public class GameController {
                 .stream()
                 .map(this::getGameEntityModel).toList();
         return new ResponseEntity<>(CollectionModel.of(allGames).add(
-                WebMvcLinkBuilder.linkTo(methodOn(GameController.class).getAllGames()).withSelfRel()
+                WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getAllGames()).withSelfRel()
         ), HttpStatus.OK);
     }
     @GetMapping("/search/id/{gameId}")
@@ -66,7 +66,7 @@ public class GameController {
         return new ResponseEntity<>
                 (CollectionModel
                         .of(topTenGames)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getTop10Games()).withSelfRel())
+                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getTop10Games()).withSelfRel())
                         ,HttpStatus.OK);
     }
 
@@ -78,7 +78,7 @@ public class GameController {
         return new ResponseEntity<>
                 (CollectionModel
                         .of(topTenGames)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getTop10GamesByGenre(genre)).withSelfRel())
+                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getTop10GamesByGenre(genre)).withSelfRel())
                         ,HttpStatus.OK);
     }
 
@@ -96,7 +96,7 @@ public class GameController {
         return new ResponseEntity<>
                 (CollectionModel
                         .of(gamesByUsername)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getAllUserGames(username)).withSelfRel())
+                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllUserGames(username)).withSelfRel())
                         ,HttpStatus.OK);
     }
 
@@ -114,7 +114,7 @@ public class GameController {
         return new ResponseEntity<>
                 (CollectionModel
                         .of(gamesByUserId)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getAllUserGamesByUserId(userId)).withSelfRel())
+                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllUserGamesByUserId(userId)).withSelfRel())
                         ,HttpStatus.OK);
     }
 
@@ -129,7 +129,7 @@ public class GameController {
         return new ResponseEntity<>
                 (CollectionModel
                         .of(gamesByPartialTitle)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getAllGamesByTitle(title)).withSelfRel())
+                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllGamesByTitle(title)).withSelfRel())
                         ,HttpStatus.OK);
     }
 
@@ -148,7 +148,7 @@ public class GameController {
         return new ResponseEntity<>
                 (CollectionModel
                         .of(gamesByGenre)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getAllGamesByGenre(genre)).withSelfRel())
+                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllGamesByGenre(genre)).withSelfRel())
                         ,HttpStatus.OK);
     }
 
@@ -159,7 +159,7 @@ public class GameController {
         }
         GameModel newGame = gameService.createGame(gameModel);
         URI location = URI.create("/api/games/search/id/"+newGame.getId());
-        Link selfLink = WebMvcLinkBuilder.linkTo(methodOn(GameController.class).getGameById(newGame.getId())).withSelfRel();
+        Link selfLink = WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getGameById(newGame.getId())).withSelfRel();
         return ResponseEntity.created(location).body(getGameEntityModel(newGame).add(selfLink));
     }
 
@@ -196,7 +196,7 @@ public class GameController {
                 .stream()
                 .map(score
                         -> WebMvcLinkBuilder
-                        .linkTo(methodOn(HighScoreController.class).getScoreById(score.getScoreId()))
+                        .linkTo(methodOn(HighScoreApiController.class).getScoreById(score.getScoreId()))
                         .withRel("Score: " + score.getScore() + " User: " + score.getUserModel().getUsername())).toList();
 
     }
@@ -205,13 +205,13 @@ public class GameController {
         return commentService.getCommentsByGame(gameModel.getId())
                 .stream().map(comment ->
                         WebMvcLinkBuilder
-                                .linkTo(methodOn(CommentController.class).getCommentById(comment.getId()))
+                                .linkTo(methodOn(CommentApiController.class).getCommentById(comment.getId()))
                                 .withRel("User: " + comment.getUserModel().getUsername() + " Comment: " +comment.getCommentText()))
                 .toList();
     }
 
     private EntityModel<GameModel> getGameEntityModel(GameModel gameModel){
-        Link selfLink = WebMvcLinkBuilder.linkTo(methodOn(GameController.class).getGameById(gameModel.getId())).withSelfRel();
+        Link selfLink = WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getGameById(gameModel.getId())).withSelfRel();
         return EntityModel.of(gameModel, selfLink, getGameCreator(gameModel)).add(getGameScores(gameModel)).add(getGameComments(gameModel));
 
     }

@@ -102,7 +102,7 @@ public class UserApiController {
                 .stream()
                 .map(comment ->
                         WebMvcLinkBuilder
-                        .linkTo(WebMvcLinkBuilder.methodOn(CommentController.class).getCommentById(comment.getId()))
+                        .linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getCommentById(comment.getId()))
                         .withRel("Comment: " + comment.getCommentText()))
                 .toList();
     }
@@ -113,7 +113,7 @@ public class UserApiController {
                 .stream()
                 .map(game ->
                         WebMvcLinkBuilder
-                                .linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getGameById(game.getId()))
+                                .linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(game.getId()))
                                 .withRel("Game: " + game.getTitle()))
                 .toList();
     }
@@ -123,7 +123,7 @@ public class UserApiController {
                 .stream()
                 .map(score ->
                         WebMvcLinkBuilder
-                                .linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getGameById(score.getGamesModel().getId()))
+                                .linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(score.getGamesModel().getId()))
                                 .withRel("Score: " + score.getScore() + " Game: " + score.getGamesModel().getTitle()))
                 .toList();
     }
