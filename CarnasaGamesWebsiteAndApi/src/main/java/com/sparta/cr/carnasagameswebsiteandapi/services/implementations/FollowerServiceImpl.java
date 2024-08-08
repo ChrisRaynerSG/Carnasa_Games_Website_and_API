@@ -47,10 +47,8 @@ public class FollowerServiceImpl {
     }
 
     public FollowerModel followNewUser(FollowerModel followerModel) {
-        if(validateNewFollower(followerModel)){
-            return followerRepository.save(followerModel);
-        }
-        return null;
+        validateNewFollower(followerModel);
+        return followerRepository.save(followerModel);
     }
 
     public FollowerModel unfollowUser(Long userId, Long followerId) {
