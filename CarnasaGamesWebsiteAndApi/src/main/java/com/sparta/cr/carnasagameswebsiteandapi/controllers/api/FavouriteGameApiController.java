@@ -2,8 +2,6 @@ package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FavouriteGameModel;
-import com.sparta.cr.carnasagameswebsiteandapi.models.FavouriteGameModelId;
-import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.FavouriteGameServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
@@ -20,14 +18,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users/")
-public class FavouriteGameController {
+public class FavouriteGameApiController {
 
     private final FavouriteGameServiceImpl favouriteGameService;
     private final GameServiceImpl gameService;
     private final UserServiceImpl userService;
 
     @Autowired
-    public FavouriteGameController(FavouriteGameServiceImpl favouriteGameService, GameServiceImpl gameService, UserServiceImpl userService) {
+    public FavouriteGameApiController(FavouriteGameServiceImpl favouriteGameService, GameServiceImpl gameService, UserServiceImpl userService) {
         this.favouriteGameService = favouriteGameService;
         this.gameService = gameService;
         this.userService = userService;

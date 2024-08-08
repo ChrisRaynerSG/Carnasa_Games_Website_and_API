@@ -26,14 +26,18 @@ public class UserApiController {
     private final GameServiceImpl gameService;
     private final HighScoreServiceImpl highScoreService;
     private final FollowerServiceImpl followerService;
+    private final FavouriteGameServiceImpl favouriteGameService;
 
     @Autowired
-    public UserApiController(UserServiceImpl userService, CommentServiceImpl commentService, GameServiceImpl gameService, HighScoreServiceImpl highScoreService, FollowerServiceImpl followerService) {
+    public UserApiController(UserServiceImpl userService, CommentServiceImpl commentService,
+                             GameServiceImpl gameService, HighScoreServiceImpl highScoreService,
+                             FollowerServiceImpl followerService, FavouriteGameServiceImpl favouriteGameService) {
         this.userService = userService;
         this.commentService = commentService;
         this.gameService = gameService;
         this.highScoreService = highScoreService;
         this.followerService = followerService;
+        this.favouriteGameService = favouriteGameService;
     }
 
     @GetMapping("/search/all")
@@ -146,9 +150,22 @@ public class UserApiController {
                                         "Following: " + follower.getUser().getUsername())
                 ).toList();
     }
+    private List<Link> getFavouriteGamesLinks(UserModel user) {
+        return favouriteGameService.getAllFavouriteGamesByUserId(user.getId())
+                .stream()
+                .map(fav -> WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(fav.getGameModel().getId())).withRel(
+                        "Favourited Game: " + fav.getGameModel().getTitle())
+                ).toList();
+    }
 
     private EntityModel<UserDto> getUserEntityModel(UserModel userModel) {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userModel.getId())).withSelfRel();
-        return EntityModel.of(userService.convertUserToDto(userModel), selfLink).add(getCommentsLinks(userModel)).add(getGamesLinks(userModel)).add(getScoresLinks(userModel)).add(getFollowersLinks(userModel)).add(getFollowingLinks(userModel));
+        return EntityModel.of(userService.convertUserToDto(userModel), selfLink)
+                .add(getCommentsLinks(userModel))
+                .add(getGamesLinks(userModel))
+                .add(getFavouriteGamesLinks(userModel))
+                .add(getScoresLinks(userModel))
+                .add(getFollowersLinks(userModel))
+                .add(getFollowingLinks(userModel));
     }
 }
