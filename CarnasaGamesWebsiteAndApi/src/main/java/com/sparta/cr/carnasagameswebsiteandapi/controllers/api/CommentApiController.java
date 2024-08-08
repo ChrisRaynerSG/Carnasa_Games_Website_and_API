@@ -21,14 +21,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/comments")
-public class CommentController {
+public class CommentApiController {
 
     private final CommentServiceImpl commentService;
     private final UserServiceImpl userService;
     private final GameServiceImpl gameService;
 
     @Autowired
-    public CommentController(CommentServiceImpl commentService, UserServiceImpl userService, GameServiceImpl gameService) {
+    public CommentApiController(CommentServiceImpl commentService, UserServiceImpl userService, GameServiceImpl gameService) {
         this.commentService = commentService;
         this.userService = userService;
         this.gameService = gameService;
@@ -39,7 +39,7 @@ public class CommentController {
         List<EntityModel<CommentModel>> comments = commentService.getAllComments()
                 .stream().map(this::getCommentEntityModel).toList();
         return new ResponseEntity<>(CollectionModel.of(comments).add(
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentController.class).getAllComments()).withSelfRel())
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getAllComments()).withSelfRel())
                 , HttpStatus.OK);
     }
     @GetMapping("/search/{commentId}")
@@ -97,7 +97,7 @@ public class CommentController {
         }
         CommentModel newComment = commentService.createComment(commentModel);
         URI location = URI.create("/api/comments/search/"+newComment.getId());
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentController.class).getCommentById(newComment.getId())).withSelfRel();
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getCommentById(newComment.getId())).withSelfRel();
         return ResponseEntity.created(location).body(EntityModel.of(newComment).add(selfLink));
     }
     @PutMapping("/update/{commentId}")
@@ -134,13 +134,13 @@ public class CommentController {
     private Link getGameLink(CommentModel commentModel){
         return WebMvcLinkBuilder
                 .linkTo(WebMvcLinkBuilder
-                .methodOn(GameController.class).getGameById(commentModel.getGamesModel().getId()))
+                .methodOn(GameApiController.class).getGameById(commentModel.getGamesModel().getId()))
                 .withRel("Game: " + commentModel.getGamesModel().getTitle());
     }
 
     private EntityModel<CommentModel> getCommentEntityModel(CommentModel commentModel) {
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentController.class).getCommentById(commentModel.getId())).withSelfRel();
-        Link relink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentController.class).getAllComments()).withRel("All Comments");
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getCommentById(commentModel.getId())).withSelfRel();
+        Link relink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getAllComments()).withRel("All Comments");
         return EntityModel.of(commentModel, selfLink, relink, getUserLink(commentModel), getGameLink(commentModel));
     }
 

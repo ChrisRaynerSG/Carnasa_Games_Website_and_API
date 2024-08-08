@@ -70,7 +70,7 @@ public class GameServiceImpl implements GameServicable {
 
     @Override
     public List<GameModel> getGamesByGenre(String genre) {
-        return getAllGames().stream().filter(game -> game.getGenre().equalsIgnoreCase(genre)).toList();
+        return getAllGames().stream().filter(game -> game.getGenre().getGenre().equalsIgnoreCase(genre)).toList();
     }
 
     @Override
@@ -113,7 +113,7 @@ public class GameServiceImpl implements GameServicable {
     }
 
     public boolean validateNewGame(GameModel game) {
-        Matcher matcher = getGenreMatcher(game.getGenre());
+        Matcher matcher = getGenreMatcher(game.getGenre().getGenre());
         if(getGame(game.getId()).isPresent()){
             throw new ModelAlreadyExistsException("Cannot create new game with ID: " + game.getId() + " already exists");
         }
@@ -121,7 +121,7 @@ public class GameServiceImpl implements GameServicable {
             throw new InvalidUserException("Cannot create game without creator");
         }
         if(!matcher.matches()){
-            throw new InvalidGenreException(game.getGenre());
+            throw new InvalidGenreException(game.getGenre().getGenre());
         }
         if(!game.getTitle().matches("[a-zA-Z0-9\\s]+")){
             throw new InvalidTitleException(game.getTitle());
@@ -136,7 +136,7 @@ public class GameServiceImpl implements GameServicable {
     }
 
     public boolean validateExistingGame(GameModel game) {
-        Matcher matcher = getGenreMatcher(game.getGenre());
+        Matcher matcher = getGenreMatcher(game.getGenre().getGenre());
         if(getGame(game.getId()).isEmpty()){
             throw new ModelNotFoundException("Cannot update game as ID: " + game.getId() + " does not exist");
         }
@@ -153,7 +153,7 @@ public class GameServiceImpl implements GameServicable {
 
         if(!beforeUpdate.getGenre().equals(game.getGenre())){
             if(!matcher.matches()){
-                throw new InvalidGenreException(game.getGenre());
+                throw new InvalidGenreException(game.getGenre().getGenre());
             }
         }
 

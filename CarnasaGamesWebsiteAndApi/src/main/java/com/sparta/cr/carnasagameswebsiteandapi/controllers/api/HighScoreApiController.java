@@ -20,14 +20,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/scores")
-public class HighScoreController {
+public class HighScoreApiController {
 
     private final HighScoreServiceImpl highScoreService;
     private final GameServiceImpl gameService;
     private final UserServiceImpl userService;
 
     @Autowired
-    public HighScoreController(HighScoreServiceImpl highScoreService, GameServiceImpl gameService, UserServiceImpl userService){
+    public HighScoreApiController(HighScoreServiceImpl highScoreService, GameServiceImpl gameService, UserServiceImpl userService){
         this.highScoreService = highScoreService;
         this.gameService = gameService;
         this.userService = userService;
@@ -37,7 +37,7 @@ public class HighScoreController {
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getAllHighScores(){
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getAllHighScores().stream().map(this::getHighScoreEntityModel).toList();
         return new ResponseEntity<>(CollectionModel.of(highScores).add(
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreController.class).getAllHighScores()).withSelfRel()
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores()).withSelfRel()
         ), HttpStatus.OK);
     }
 
@@ -48,7 +48,7 @@ public class HighScoreController {
         }
         HighScoreModel highScoreModel = highScoreService.getHighScore(scoreId).get();
         return ResponseEntity.ok(getHighScoreEntityModel(highScoreModel).add(
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreController.class).getAllHighScores()).withRel("All Scores")
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores()).withRel("All Scores")
         ));
     }
 
@@ -116,7 +116,7 @@ public class HighScoreController {
         highScoreService.validateNewHighScore(highScoreModel);
         HighScoreModel newHighScore = highScoreService.createHighScore(highScoreModel);
         URI location = URI.create("/api/scores/search/" + newHighScore.getScoreId());
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreController.class).getAllHighScores()).withSelfRel();
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores()).withSelfRel();
         return ResponseEntity.created(location).body(EntityModel.of(newHighScore).add(selfLink));
     }
     @PutMapping("/update/{scoreId}")
@@ -145,11 +145,11 @@ public class HighScoreController {
         return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(highScoreModel.getUserModel().getId())).withRel("User: " + highScoreModel.getUserModel().getUsername());
     }
     private Link getGameLink(HighScoreModel highScoreModel){
-        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameController.class).getGameById(highScoreModel.getGamesModel().getId())).withRel("Game: " + highScoreModel.getGamesModel().getTitle());
+        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(highScoreModel.getGamesModel().getId())).withRel("Game: " + highScoreModel.getGamesModel().getTitle());
     }
 
     private EntityModel<HighScoreModel> getHighScoreEntityModel(HighScoreModel highScoreModel){
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreController.class).getScoreById(highScoreModel.getScoreId())).withSelfRel();
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getScoreById(highScoreModel.getScoreId())).withSelfRel();
         return EntityModel.of(highScoreModel, getUserLink(highScoreModel), getGameLink(highScoreModel), selfLink);
     }
 }

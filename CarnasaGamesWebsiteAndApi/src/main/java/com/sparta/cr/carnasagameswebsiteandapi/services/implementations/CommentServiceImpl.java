@@ -6,6 +6,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.Model
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidDateException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.CommentRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.CommentServiceable;
@@ -175,7 +176,14 @@ public class CommentServiceImpl implements CommentServiceable {
 
     public CommentModel censorBadText(CommentModel comment) {
 
-        String[] censoredText = {"fuck","shit","cunt","arse","ass","shite","sh1t","5hit","5h1t","ar5e","a55","a5s","as5","wank"};
+        String[] censoredText = {
+                "fuck","shit","cunt","arse","ass","shite","sh1t","5hit","5h1t","ar5e","a55","a5s","as5","wank", "fuck", "shit", "bitch", "asshole", "bastard", "crap", "dickhead",
+                "motherfucker", "piss", "twat", "wanker", "bollocks", "bugger", "nigger", "chink", "faggot", "queer", "kike", "wetback", "gook",
+                "raghead", "tarbaby", "tranny", "heeb", "slant", "gypsy", "porn", "dick", "pussy", "blowjob", "anal", "cum", "tits",
+                "nipple", "vagina", "penis", "whore", "slut", "fisting", "handjob", "masturbate", "orgasm", "boner", "buttfuck", "clit", "dildo", "ejaculate",
+                "hentai",  "stripper", "buttplug", "fellatio", "cunnilingus", "bukkake", "pegging", "rimjob" //can add more if needed but I think this is enough, thanks chatGpt for saving me writing out those...
+        };
+
         String patternString = "(" + String.join("|", censoredText) + ")";
         Pattern pattern = Pattern.compile(patternString, Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(comment.getCommentText());

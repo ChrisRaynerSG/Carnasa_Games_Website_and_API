@@ -1,6 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi;
 
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
+import com.sparta.cr.carnasagameswebsiteandapi.models.GenreModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.GameRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
@@ -49,6 +50,8 @@ public class GameServiceTest {
     private UserModel userModel1;
     private UserModel userModel2;
     private UserModel userModel3;
+    private GenreModel genreModel1;
+    private GenreModel genreModel2;
 
     @BeforeEach
     void setUp() {
@@ -59,6 +62,10 @@ public class GameServiceTest {
         userModel3 = new UserModel();
         gameModelList = new ArrayList<>();
         topScoresList = new ArrayList<>();
+        genreModel1 = new GenreModel();
+        genreModel2 = new GenreModel();
+        genreModel1.setGenre("Puzzle");
+        genreModel2.setGenre("Sports");
 
         userModel1.setUsername("admin");
         userModel1.setId(1234L);
@@ -75,8 +82,8 @@ public class GameServiceTest {
         userModel3.setPassword("admoo");
         userModel3.setEmail("user2@user2.com");
 
-        gameModel1.setGenre("action");
-        gameModel2.setGenre("puzzle");
+        gameModel1.setGenre(genreModel1);
+        gameModel2.setGenre(genreModel2);
 
         gameModel1.setCreator(userModel1);
         gameModel2.setCreator(userModel3);
@@ -93,10 +100,10 @@ public class GameServiceTest {
         for(int i =0; i<30; i++){
             GameModel gameModel = new GameModel();
             if(i%2==0){
-                gameModel.setGenre("puzzle");
+                gameModel.setGenre(genreModel1);
             }
             else {
-                gameModel.setGenre("action");
+                gameModel.setGenre(genreModel2);
             }
             gameModel.setTimesPlayed(i*10);
             topScoresList.add(gameModel);
@@ -223,7 +230,7 @@ public class GameServiceTest {
     void testCreateNewGameReturnsGameIfSuccessful(){
         GameModel gameModel = new GameModel();
         gameModel.setId(1234L);
-        gameModel.setGenre("action");
+        gameModel.setGenre(genreModel1);
         gameModel.setTitle("Game Title");
         gameModel.setCreator(userModel1);
         when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
@@ -244,7 +251,7 @@ public class GameServiceTest {
     void testUpdateGameReturnsGameIfSuccessful(){
         GameModel gameModel = new GameModel();
         gameModel.setId(1234L);
-        gameModel.setGenre("puzzle");
+        gameModel.setGenre(genreModel1);
         gameModel.setCreator(userModel1);
         when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
         when(gameRepository.save(any(GameModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
