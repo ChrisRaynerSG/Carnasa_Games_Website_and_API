@@ -49,29 +49,24 @@ public class FavouriteGameServiceImpl {
     }
 
     public FavouriteGameModel createFavouriteGame(FavouriteGameModel favouriteGameModel){
-        if(validateNewFavouriteGame(favouriteGameModel)){
-            updateGameTimesPlayed(favouriteGameModel, 1);
-            favouriteGameModel.setNumberOfVisits(1);
-            favouriteGameModel.setFavourite(false);
-            return favouriteGameRepo.save(favouriteGameModel);
-
-        }
-        return null;
+        validateNewFavouriteGame(favouriteGameModel);
+        updateGameTimesPlayed(favouriteGameModel, 1);
+        favouriteGameModel.setNumberOfVisits(1);
+        favouriteGameModel.setFavourite(false);
+        return favouriteGameRepo.save(favouriteGameModel);
     }
 
     public FavouriteGameModel updateFavouriteGame(FavouriteGameModel favouriteGameModel){
-        if(validateExistingFavouriteGame(favouriteGameModel)){
-            FavouriteGameModel preUpdate = getFavouriteGame(favouriteGameModel.getFavouriteGameModelId()).get();
-            if(preUpdate.getNumberOfVisits() == favouriteGameModel.getNumberOfVisits()){
-                return favouriteGameRepo.save(favouriteGameModel);
-            }
-            else {
-                int diff = favouriteGameModel.getNumberOfVisits() - preUpdate.getNumberOfVisits();
-                updateGameTimesPlayed(favouriteGameModel, diff);
-                return favouriteGameRepo.save(favouriteGameModel);
-            }
+        validateExistingFavouriteGame(favouriteGameModel);
+        FavouriteGameModel preUpdate = getFavouriteGame(favouriteGameModel.getFavouriteGameModelId()).get();
+        if(preUpdate.getNumberOfVisits() == favouriteGameModel.getNumberOfVisits()){
+            return favouriteGameRepo.save(favouriteGameModel);
         }
-        return null;
+        else {
+            int diff = favouriteGameModel.getNumberOfVisits() - preUpdate.getNumberOfVisits();
+            updateGameTimesPlayed(favouriteGameModel, diff);
+            return favouriteGameRepo.save(favouriteGameModel);
+        }
     }
 
     public FavouriteGameModel deleteFavouriteGame(Long userId, Long gameId){
@@ -83,7 +78,7 @@ public class FavouriteGameServiceImpl {
             favouriteGameRepo.deleteById(gameIdToDelete);
             return relDeleted;
         }
-        return null;
+        throw new ModelNotFoundException("Unable to delete favourite game relationship as user or game not found");
     }
 
     private void updateGameTimesPlayed(FavouriteGameModel favouriteGameModel, int diff) {
@@ -92,27 +87,21 @@ public class FavouriteGameServiceImpl {
         gameService.updateGame(game);
     }
 
-    public boolean validateNewFavouriteGame(FavouriteGameModel favouriteGameModel){
-        if(validateUserAndGame(favouriteGameModel)){
-            if(getFavouriteGame(favouriteGameModel.getFavouriteGameModelId()).isPresent()){
-                throw new ModelAlreadyExistsException("Cannot create new favourite game relationship as already exists");
-            }
-            return true;
+    public void validateNewFavouriteGame(FavouriteGameModel favouriteGameModel){
+        validateUserAndGame(favouriteGameModel);
+        if(getFavouriteGame(favouriteGameModel.getFavouriteGameModelId()).isPresent()){
+            throw new ModelAlreadyExistsException("Cannot create new favourite game relationship as already exists");
         }
-        else return false;
     }
 
-    public boolean validateExistingFavouriteGame(FavouriteGameModel favouriteGameModel){
-        if(validateUserAndGame(favouriteGameModel)){
-            if(getFavouriteGame(favouriteGameModel.getFavouriteGameModelId()).isEmpty()){
-                throw new ModelNotFoundException("Cannot update Favourite Game relationship as relationship not found");
-            }
-            return true;
+    public void validateExistingFavouriteGame(FavouriteGameModel favouriteGameModel){
+        validateUserAndGame(favouriteGameModel);
+        if(getFavouriteGame(favouriteGameModel.getFavouriteGameModelId()).isEmpty()){
+            throw new ModelNotFoundException("Cannot update Favourite Game relationship as relationship not found");
         }
-        else return false;
     }
 
-    private boolean validateUserAndGame(FavouriteGameModel favouriteGameModel) {
+    private void validateUserAndGame(FavouriteGameModel favouriteGameModel) {
         if(userService.getUser(favouriteGameModel.getUserModel().getId()).isEmpty()
                 ||userService.getUser(favouriteGameModel.getFavouriteGameModelId().getUserId()).isEmpty()){
             throw new UserNotFoundException(favouriteGameModel.getUserModel().getId().toString());
@@ -121,6 +110,5 @@ public class FavouriteGameServiceImpl {
                 ||gameService.getGame(favouriteGameModel.getFavouriteGameModelId().getGameId()).isEmpty()){
             throw new ModelNotFoundException("Cannot create new Favourite Game relationship as no game with ID: " + favouriteGameModel.getGameModel().getId().toString() + " could be found");
         }
-        return true;
     }
 }

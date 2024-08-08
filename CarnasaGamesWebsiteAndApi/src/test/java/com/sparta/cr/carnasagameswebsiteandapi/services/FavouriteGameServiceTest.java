@@ -1,5 +1,8 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FavouriteGameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FavouriteGameModelId;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,9 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class FavouriteGameServiceTest {
@@ -66,12 +71,18 @@ public class FavouriteGameServiceTest {
         user1.setUsername("User1");
         user2.setUsername("User2");
 
+        FavouriteGameModelId favouriteGameModelId1 = new FavouriteGameModelId();
+        favouriteGameModelId1.setGameId(1L);
+        favouriteGameModelId1.setUserId(1L);
+
+        favouriteGame1.setFavouriteGameModelId(favouriteGameModelId1);
+
         game1 = new GameModel();
         game2 = new GameModel();
         game3 = new GameModel();
 
         game1.setId(1L); game2.setId(2L); game3.setId(3L); game1.setTitle("Game1");
-        game2.setTitle("Game2"); game3.setTitle("Game3");
+        game2.setTitle("Game2"); game3.setTitle("Game3"); game1.setTimesPlayed(1);
 
         favouriteGame1.setUserModel(user1);
         favouriteGame2.setUserModel(user1);
@@ -83,7 +94,7 @@ public class FavouriteGameServiceTest {
         favouriteGame3.setFavourite(false);
         favouriteGame4.setFavourite(false);
 
-        favouriteGame1.setNumberOfVisits(14);
+        favouriteGame1.setNumberOfVisits(1);
         favouriteGame2.setNumberOfVisits(2591);
         favouriteGame3.setNumberOfVisits(13);
         favouriteGame4.setNumberOfVisits(14);
@@ -137,4 +148,100 @@ public class FavouriteGameServiceTest {
         assertEquals(expected, top10games.size());
     }
     // todo: add tests for creation and updating of favourite game relationships
+    @Test
+    void testCreateFavouriteGameThrowsExceptionIfUserNotFound(){
+        FavouriteGameModel game = favouriteGame1;
+        when(userService.getUser(1L)).thenReturn(Optional.empty());
+        assertThrows(UserNotFoundException.class, () -> favouriteGameService.createFavouriteGame(game));
+    }
+    @Test
+    void testCreateFavouriteGameThrowsExceptionIfGameNotFound(){
+        FavouriteGameModel game = favouriteGame1;
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.empty());
+        assertThrows(ModelNotFoundException.class, () -> favouriteGameService.createFavouriteGame(game),"Cannot create new Favourite Game relationship as no game with ID: " + game.getGameModel().getId().toString() + " could be found" );
+    }
+    @Test
+    void testCreateFavouriteGameThrowsExceptionIfRelationshipAlreadyExists(){
+        FavouriteGameModel game = favouriteGame1;
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
+        when(favouriteGameRepository.findById(any(FavouriteGameModelId.class))).thenReturn(Optional.of(favouriteGame1));
+        assertThrows(ModelAlreadyExistsException.class, () -> favouriteGameService.createFavouriteGame(game));
+    }
+    @Test
+    void testCreateFavouriteGameIsSuccessful(){
+        FavouriteGameModel game = favouriteGame1;
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
+        when(favouriteGameRepository.findById(any(FavouriteGameModelId.class))).thenReturn(Optional.empty());
+        when(favouriteGameRepository.save(any(FavouriteGameModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        FavouriteGameModel createdGame = favouriteGameService.createFavouriteGame(game);
+        assertNotNull(createdGame);
+        assertFalse(createdGame.isFavourite());
+        assertEquals(2,game1.getTimesPlayed());
+    }
+    @Test
+    void testUpdateFavouriteGameThrowsExceptionIfUserNotFound(){
+        FavouriteGameModel game = favouriteGame1;
+        when(userService.getUser(1L)).thenReturn(Optional.empty());
+        assertThrows(UserNotFoundException.class, () -> favouriteGameService.updateFavouriteGame(game));
+    }
+    @Test
+    void testUpdateFavouriteGameThrowsExceptionIfGameNotFound(){
+        FavouriteGameModel game = favouriteGame1;
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.empty());
+        assertThrows(ModelNotFoundException.class, () -> favouriteGameService.updateFavouriteGame(game),"Cannot create new Favourite Game relationship as no game with ID: " + game.getGameModel().getId().toString() + " could be found" );
+    }
+    @Test
+    void testUpdateFavouriteGameThrowsExceptionIfRelationshipDoesNotExists(){
+        FavouriteGameModel game = favouriteGame1;
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
+        when(favouriteGameRepository.findById(any(FavouriteGameModelId.class))).thenReturn(Optional.empty());
+        assertThrows(ModelNotFoundException.class, () -> favouriteGameService.updateFavouriteGame(game));
+    }
+    @Test
+    void testUpdateFavouriteGameDoesNotUpdateTimesPlayedIfTimesPlayedNotDifferent(){
+        FavouriteGameModel game = favouriteGame1;
+        game.setFavourite(false);
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
+        when(favouriteGameRepository.findById(any(FavouriteGameModelId.class))).thenReturn(Optional.of(favouriteGame1));
+        when(favouriteGameRepository.save(any(FavouriteGameModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        FavouriteGameModel updatedRelationship = favouriteGameService.updateFavouriteGame(game);
+        assertFalse(updatedRelationship.isFavourite());
+        assertEquals(1,game1.getTimesPlayed());
+    }
+    @Test
+    void testUpdateFavouriteGameDoesUpdateTimesPlayedIfTimesPlayedDifferent(){
+        FavouriteGameModel game = new FavouriteGameModel();
+        FavouriteGameModelId existingId = new FavouriteGameModelId();
+        existingId.setGameId(game1.getId());
+        existingId.setUserId(user1.getId());
+        game.setFavouriteGameModelId(existingId);
+        game.setGameModel(game1);
+        game.setUserModel(user1);
+        game.setFavourite(true);
+        game.setNumberOfVisits(4);
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
+        when(favouriteGameRepository.findById(any(FavouriteGameModelId.class))).thenReturn(Optional.of(favouriteGame1));
+        when(favouriteGameRepository.save(any(FavouriteGameModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        FavouriteGameModel updatedRelationship = favouriteGameService.updateFavouriteGame(game);
+        assertTrue(updatedRelationship.isFavourite());
+        assertEquals(4,game1.getTimesPlayed());
+    }
+    @Test
+    void testDeleteFavouriteGameThrowsExceptionIfUserNotFound(){
+        when(favouriteGameRepository.findById(any(FavouriteGameModelId.class))).thenReturn(Optional.empty());
+        assertThrows(ModelNotFoundException.class,() -> favouriteGameService.deleteFavouriteGame(1L,1L));
+    }
+    @Test
+    void testDeleteFavouriteGameSucessfullyDeletesFavouriteGame(){
+        when(favouriteGameRepository.findById(any(FavouriteGameModelId.class))).thenReturn(Optional.of(favouriteGame1));
+        FavouriteGameModel deletedGame = favouriteGameService.deleteFavouriteGame(1L,1L);
+        assertNotNull(deletedGame);
+    }
 }
