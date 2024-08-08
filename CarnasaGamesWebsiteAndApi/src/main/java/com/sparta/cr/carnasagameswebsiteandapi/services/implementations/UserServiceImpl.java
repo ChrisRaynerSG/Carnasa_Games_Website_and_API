@@ -27,13 +27,11 @@ import java.util.*;
 public class UserServiceImpl extends DefaultOAuth2UserService implements UserServiceable {
 
     private UserRepository userRepository;
-    private FollowerRepository followerRepository;
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, FollowerRepository followerRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
-        this.followerRepository = followerRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -157,63 +155,6 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         Optional<UserModel> user = getUser(userId);
         user.ifPresent(userModel -> userRepository.delete(userModel));
         return user.orElse(null);
-    }
-
-    public Optional<FollowerModel> getFollowerModelById(FollowerModelId followerModelId) {
-        return followerRepository.findById(followerModelId);
-    }
-
-    public List<FollowerModel> getAllFollowers() {
-        return followerRepository.findAll();
-    }
-
-    public List<FollowerModel> getAllFollowersByUserId(Long userId) {
-        return getAllFollowers().stream().filter(followerModel -> followerModel.getUser().getId().equals(userId)).toList();
-    }
-
-    public List<FollowerModel> getAllFollowingByUserId(Long userId) {
-        return getAllFollowers().stream().filter(followerModel -> followerModel.getFollower().getId().equals(userId)).toList();
-    }
-
-    public Long getNumberOfFollowersByUserId(Long userId) {
-        return getAllFollowers().stream().filter(followerModel -> followerModel.getUser().getId().equals(userId)).count();
-    }
-
-    public FollowerModel followNewUser(FollowerModel followerModel) {
-        if(validateNewFollower(followerModel)){
-            return followerRepository.save(followerModel);
-        }
-        return null;
-    }
-
-    public FollowerModel unfollowUser(Long userId, Long followerId) {
-        FollowerModelId followerModelId = new FollowerModelId();
-        followerModelId.setFollower_id(followerId);
-        followerModelId.setUser_id(userId);
-        if(getFollowerModelById(followerModelId).isPresent()){
-            FollowerModel followerModel = getFollowerModelById(followerModelId).get();
-            followerRepository.delete(followerModel);
-            return followerModel;
-        }
-        else {
-            throw new UserNotFoundException("Unable to unfollow user with id: " + userId + " by user id: " + followerId + "as follower relationship not found");
-        }
-    }
-
-    public boolean validateNewFollower(FollowerModel followerModel) {
-        if(getUser(followerModel.getFollower().getId()).isEmpty()){
-            throw new UserNotFoundException(followerModel.getFollower().getId().toString());
-        }
-        if(getUser(followerModel.getUser().getId()).isEmpty()){
-            throw new UserNotFoundException(followerModel.getUser().getId().toString());
-        }
-        if(followerModel.getFollower().getId().equals(followerModel.getUser().getId())){
-            throw new InvalidUserException("You cannot follow yourself");
-        }
-        if(getFollowerModelById(followerModel.getId()).isPresent()){
-            throw new InvalidUserException("You are already following user: " + followerModel.getUser().getUsername());
-        }
-        return true;
     }
 
     public boolean validateNewUser(UserModel user){

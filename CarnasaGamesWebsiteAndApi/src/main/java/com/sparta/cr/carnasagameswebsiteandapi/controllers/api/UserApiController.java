@@ -4,10 +4,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNot
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UsernameNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UserDto;
-import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.CommentServiceImpl;
-import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
-import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.HighScoreServiceImpl;
-import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
+import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -28,13 +25,15 @@ public class UserApiController {
     private final UserServiceImpl userService;
     private final GameServiceImpl gameService;
     private final HighScoreServiceImpl highScoreService;
+    private final FollowerServiceImpl followerService;
 
     @Autowired
-    public UserApiController(UserServiceImpl userService, CommentServiceImpl commentService, GameServiceImpl gameService, HighScoreServiceImpl highScoreService) {
+    public UserApiController(UserServiceImpl userService, CommentServiceImpl commentService, GameServiceImpl gameService, HighScoreServiceImpl highScoreService, FollowerServiceImpl followerService) {
         this.userService = userService;
         this.commentService = commentService;
         this.gameService = gameService;
         this.highScoreService = highScoreService;
+        this.followerService = followerService;
     }
 
     @GetMapping("/search/all")
@@ -130,7 +129,7 @@ public class UserApiController {
     }
 
     private List<Link> getFollowersLinks(UserModel user) {
-        return userService.getAllFollowersByUserId(user.getId())
+        return followerService.getAllFollowersByUserId(user.getId())
                 .stream()
                 .map(follower ->
                         WebMvcLinkBuilder
@@ -139,7 +138,7 @@ public class UserApiController {
                                 ).toList();
     }
     private List<Link> getFollowingLinks(UserModel user) {
-        return userService.getAllFollowingByUserId(user.getId())
+        return followerService.getAllFollowingByUserId(user.getId())
                 .stream()
                 .map(follower ->
                         WebMvcLinkBuilder
