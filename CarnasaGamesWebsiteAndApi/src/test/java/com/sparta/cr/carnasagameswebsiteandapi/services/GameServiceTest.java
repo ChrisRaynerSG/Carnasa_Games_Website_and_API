@@ -1,5 +1,7 @@
-package com.sparta.cr.carnasagameswebsiteandapi;
+package com.sparta.cr.carnasagameswebsiteandapi.services;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.GameAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GenreModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
@@ -19,23 +21,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class GameServiceTest {
 
     private static final Logger log = LoggerFactory.getLogger(GameServiceTest.class);
-    @Mock
-    private GameRepository gameRepository;
 
     @Mock
-    private GameServicable gameServicable;
+    private GameRepository gameRepository;
 
     @Mock
     private UserServiceImpl userServiceImpl;
@@ -64,8 +63,8 @@ public class GameServiceTest {
         topScoresList = new ArrayList<>();
         genreModel1 = new GenreModel();
         genreModel2 = new GenreModel();
-        genreModel1.setGenre("Puzzle");
-        genreModel2.setGenre("Sports");
+        genreModel1.setGenre("Sports");
+        genreModel2.setGenre("Puzzle");
 
         userModel1.setUsername("admin");
         userModel1.setId(1234L);
@@ -91,7 +90,7 @@ public class GameServiceTest {
         gameModel1.setTimesPlayed(1000);
         gameModel2.setTimesPlayed(2400);
 
-        gameModel1.setTitle("Super Action Game!");
+        gameModel1.setTitle("Super Sports Game!");
         gameModel2.setTitle("Tricky Puzzle Game!");
 
         gameModelList.add(gameModel1);
@@ -122,7 +121,7 @@ public class GameServiceTest {
     void testGetGamesByGenreReturnsGamesWithGenre(){
         int expected = 1;
         when(gameRepository.findAll()).thenReturn(gameModelList);
-        int actual = gameServiceImpl.getGamesByGenre("action").size();
+        int actual = gameServiceImpl.getGamesByGenre("Puzzle").size();
         Assertions.assertEquals(expected, actual);
     }
     @Test
@@ -136,7 +135,7 @@ public class GameServiceTest {
     void testGetGamesByTitleAndGenreReturnsGamesThatMatch(){
         int expected = 1;
         when(gameRepository.findAll()).thenReturn(gameModelList);
-        int actual = gameServiceImpl.getGamesByTitleAndGenre("action", "action").size();
+        int actual = gameServiceImpl.getGamesByTitleAndGenre("puzzle", "puzzle").size();
         Assertions.assertEquals(expected, actual);
     }
     @Test
@@ -199,7 +198,7 @@ public class GameServiceTest {
     void testGetTopTenGamesByGenreReturnsMostPlayedGamesOfGenre(){
         int expected = 10;
         when(gameRepository.findAll()).thenReturn(topScoresList);
-        List<GameModel> topGames = gameServiceImpl.getTopTenGamesByGenre("action");
+        List<GameModel> topGames = gameServiceImpl.getTopTenGamesByGenre("puzzle");
         for(GameModel gameModel : topGames){
             log.atInfo().log(gameModel.toString());
         }
@@ -222,9 +221,12 @@ public class GameServiceTest {
     void testCreateNewGameReturnsNullIfGameAlreadyExists(){
         GameModel gameModel = new GameModel();
         gameModel.setId(1234L);
-        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
-        GameModel createdGame = gameServiceImpl.createGame(gameModel);
-        Assertions.assertNull(createdGame);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel));
+        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.of(userModel1));
+        assertThrows(ModelAlreadyExistsException.class, () -> gameServiceImpl.createGame(gameModel));
     }
     @Test
     void testCreateNewGameReturnsGameIfSuccessful(){
@@ -234,6 +236,7 @@ public class GameServiceTest {
         gameModel.setTitle("Game Title");
         gameModel.setCreator(userModel1);
         when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
+        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.of(userModel1));
         when(gameRepository.save(any(GameModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
         GameModel createdGame = gameServiceImpl.createGame(gameModel);
         verify(gameRepository, times(1)).save(gameModel);

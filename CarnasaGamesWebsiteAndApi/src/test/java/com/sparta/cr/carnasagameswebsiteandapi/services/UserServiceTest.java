@@ -1,5 +1,9 @@
-package com.sparta.cr.carnasagameswebsiteandapi;
+package com.sparta.cr.carnasagameswebsiteandapi.services;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.EmailAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.InvalidEmailException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.InvalidPasswordException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UsernameAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
@@ -17,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -50,12 +55,14 @@ public class UserServiceTest {
         user1.setUsername("admin");
         user1.setPassword(passwordEncoderTest.encode("Password@1"));
         user1.setEmail("admin@admin.com");
+        user1.setRoles("ROLE_ADMIN");
 
         user2 = new UserModel();
         user2.setId(5678L);
         user2.setUsername("user");
         user2.setPassword(passwordEncoderTest.encode("Password@1"));
         user2.setEmail("user@user.com");
+        user2.setRoles("ROLE_USER");
 
         users = new ArrayList<>();
         users.add(user1);
@@ -74,43 +81,42 @@ public class UserServiceTest {
         Assertions.assertNull(actual);
     }
     @Test
-    void createUserReturnsNullWhenUserNameAlreadyExists(){
+    void createUserThrowsUsernameExistsExceptionWhenUserNameAlreadyExists(){
         UserModel user = new UserModel();
         user.setId(123456L);
         user.setUsername("admin");
         user.setPassword("Password@1");
         user.setEmail("newUser@email.com");
         when(userRepository.findAll()).thenReturn(users);
-        UserModel actual = userServiceImpl.createUser(user);
-        Assertions.assertNull(actual);
+        assertThrows(UsernameAlreadyExistsException.class, () -> userServiceImpl.createUser(user));
     }
     @Test
-    void createNewUserReturnsNullWhenPasswordIsInvalid(){
+    void createNewUserThrowsExceptionWhenPasswordIsInvalid(){
         UserModel user = new UserModel();
         user.setId(123456L);
         user.setUsername("admin2");
         user.setPassword("password");
         user.setEmail("newUser@email.com");
-        Assertions.assertNull(userServiceImpl.createUser(user));
+        assertThrows(InvalidPasswordException.class, () -> userServiceImpl.createUser(user));
     }
     @Test
-    void createNewUserReturnsNullIfEmailIsInvalid(){
+    void createNewUserThrowsExceptionIfEmailIsInvalid(){
         UserModel user = new UserModel();
         user.setId(123456L);
         user.setUsername("admin2");
         user.setPassword("Password@1");
         user.setEmail("invalid");
-        Assertions.assertNull(userServiceImpl.createUser(user));
+        assertThrows(InvalidEmailException.class, () -> userServiceImpl.createUser(user));
     }
     @Test
-    void createNewUserReturnsNullIfEmailAlreadyExists(){
+    void createNewUserThrowsExceptionIfEmailAlreadyExists(){
         UserModel user = new UserModel();
         user.setId(123456L);
         user.setUsername("admin2");
         user.setPassword("Password@1");
         user.setEmail("admin@admin.com");
         when(userRepository.findAll()).thenReturn(users);
-        Assertions.assertNull(userServiceImpl.createUser(user));
+        assertThrows(EmailAlreadyExistsException.class, () -> userServiceImpl.createUser(user));
     }
     @Test
     void createNewUserReturnsUserIfSuccessfullyCreated(){
@@ -154,32 +160,32 @@ public class UserServiceTest {
         user.setEmail("admin@admin.com");
         when(userRepository.findAll()).thenReturn(users);
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user1));
-        UserModel updatedUser = userServiceImpl.updateUser(user);
-        Assertions.assertNull(updatedUser);
+        assertThrows(InvalidPasswordException.class, () -> userServiceImpl.updateUser(user));
     }
     @Test
     void updateUserReturnsNullIfNewEmailIsInvalid(){
         UserModel user = new UserModel();
         user.setId(1234L);
         user.setUsername("admin");
-        user.setPassword(user1.getPassword());
+        user.setPassword("Password@1");
         user.setEmail("admin@admin");
+        user.setRoles("ROLE_ADMIN");
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user1));
-        UserModel updatedUser = userServiceImpl.updateUser(user);
-        Assertions.assertNull(updatedUser);
+        assertThrows(InvalidEmailException.class, () -> userServiceImpl.updateUser(user));
     }
     @Test
     void updateUserReturnsCorrectUserIfSuccessfullyUpdatedPassword(){
         UserModel user = new UserModel();
         user.setId(1234L);
         user.setUsername("admin");
-        user.setPassword("Password@1");
+        user.setPassword("Password@2");
         user.setEmail("admin@admin.com");
+        user.setRoles("ROLE_ADMIN");
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user1));
         when(passwordEncoder.encode(any(String.class))).thenReturn(passwordEncoderTest.encode(user.getPassword()));
         when(userRepository.save(any(UserModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
         UserModel updatedUser = userServiceImpl.updateUser(user);
-        Assertions.assertTrue(passwordEncoderTest.matches("Password@1", updatedUser.getPassword()));
+        Assertions.assertTrue(passwordEncoderTest.matches("Password@2", updatedUser.getPassword()));
     }
     @Test
     void deleteUserReturnsNullWhenUserIdDoesNotExist(){

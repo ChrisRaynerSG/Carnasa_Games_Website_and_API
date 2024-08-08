@@ -1,6 +1,5 @@
-package com.sparta.cr.carnasagameswebsiteandapi;
+package com.sparta.cr.carnasagameswebsiteandapi.services;
 
-import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.HighScoreModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;

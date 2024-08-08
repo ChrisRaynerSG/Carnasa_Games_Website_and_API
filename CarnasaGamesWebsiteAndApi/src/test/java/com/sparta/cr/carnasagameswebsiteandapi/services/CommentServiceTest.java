@@ -1,5 +1,7 @@
-package com.sparta.cr.carnasagameswebsiteandapi;
+package com.sparta.cr.carnasagameswebsiteandapi.services;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
@@ -8,14 +10,12 @@ import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.CommentS
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestTemplate;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,8 +56,8 @@ public class CommentServiceTest {
         comment3.setGamesModel(game2);
         comment3.setUserModel(user1);
 
-        comment1.setDate(LocalDate.of(2021,12,25));
-        comment2.setDate(LocalDate.of(2021,12,26));
+        comment1.setDate(LocalDate.of(2021,10,25));
+        comment2.setDate(LocalDate.of(2021,10,26));
         comment3.setDate(LocalDate.now());
 
         comments.add(comment1);
@@ -121,13 +121,12 @@ public class CommentServiceTest {
         Assertions.assertEquals(expected, actual);
     }
     @Test
-    void createCommentReturnsNullWhenCommentAlreadyExists(){
+    void createCommentThrowsExceptionWhenCommentAlreadyExists(){
         CommentModel comment = new CommentModel();
         comment.setId(1L);
         when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
         when(commentRepository.save(comment)).thenReturn(comment);
-        CommentModel actual = commentService.createComment(comment);
-        Assertions.assertNull(actual);
+        Assertions.assertThrows(ModelAlreadyExistsException.class, () -> commentService.createComment(comment));
     }
     @Test
     void createCommentReturnsNewComment(){
@@ -139,18 +138,21 @@ public class CommentServiceTest {
         Assertions.assertNotNull(actual);
     }
     @Test
-    void updateCommentReturnsNullIfCommentDoesNotExist(){
+    void updateCommentThrowsExceptionIfCommentDoesNotExist(){
         CommentModel comment = new CommentModel();
         comment.setId(1L);
         when(commentRepository.findById(1L)).thenReturn(Optional.empty());
         when(commentRepository.save(comment)).thenReturn(comment);
-        CommentModel actual = commentService.updateComment(comment);
-        Assertions.assertNull(actual);
+        Assertions.assertThrows(ModelNotFoundException.class, () -> commentService.updateComment(comment));
     }
     @Test
     void updateCommentReturnsUpdatedComment(){
         CommentModel comment = new CommentModel();
         comment.setId(1L);
+        comment.setUserModel(new UserModel());
+        comment.setDate(LocalDate.now());
+        comment.setGamesModel(new GameModel());
+        comment.setCommentText("example text");
         when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
         when(commentRepository.save(comment)).thenReturn(comment);
         CommentModel actual = commentService.updateComment(comment);
@@ -173,5 +175,23 @@ public class CommentServiceTest {
         CommentModel actual = commentService.deleteComment(1L);
         verify(commentRepository, times(1)).delete(comment);
         Assertions.assertNotNull(actual);
+    }
+
+    @Test
+    void censorCommentReturnsOriginalCommentIfNoBadText(){
+        CommentModel comment = new CommentModel();
+        String expected ="This comment is fine";
+        comment.setCommentText(expected);
+        commentService.censorBadText(comment);
+        Assertions.assertEquals(expected, comment.getCommentText());
+    }
+
+    @Test
+    void censorCommentReturnsCensoredComment(){
+        CommentModel comment = new CommentModel();
+        String expected ="This comment is ****";
+        comment.setCommentText("This comment is fuck");
+        commentService.censorBadText(comment);
+        Assertions.assertEquals(expected, comment.getCommentText());
     }
 }
