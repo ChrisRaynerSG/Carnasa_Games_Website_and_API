@@ -11,14 +11,14 @@ public class FavouriteGameModel {
     @EmbeddedId
     private FavouriteGameModelId favouriteGameModelId;
 
-    @MapsId("game_id")
-    @ManyToOne
+    @MapsId("gameId")
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id", nullable = false)
     @JsonBackReference(value = "game-favourite")
     private GameModel gameModel;
 
-    @MapsId("user_id")
-    @ManyToOne
+    @MapsId("userId")
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonBackReference(value = "user-favourite")
     private UserModel userModel;

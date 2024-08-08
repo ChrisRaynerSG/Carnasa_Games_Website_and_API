@@ -89,18 +89,6 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         return getAllUsers().stream().filter(userModel -> userModel.getUsername().contains(name)).toList();
     }
 
-    public List<UserDto> getAllUserDtos() {
-        return getAllUsers().stream().map(user -> new UserDto(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getProfileImage(),
-                user.getDescription(),
-                user.getRoles(),
-                user.isPrivate()
-        )).toList();
-    }
-
     @Override
     public Optional<UserModel> getUserByUsername(String username) {
         List<UserModel> users = getAllUsers();
@@ -111,43 +99,16 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         }
         return Optional.empty();
     }
-    public Optional<UserDto> getUserDtoByUsername(String username) {
-        List<UserModel> users = getAllUsers();
-        for (UserModel user : users) {
-            if (user.getUsername().equals(username)) {
-                return Optional.of(user).map(userToMap -> new UserDto(
-                        userToMap.getId(),
-                        userToMap.getUsername(),
-                        userToMap.getEmail(),
-                        userToMap.getProfileImage(),
-                        userToMap.getDescription(),
-                        userToMap.getRoles(),
-                        user.isPrivate()));
-            }
-        }
-        return Optional.empty();
-    }
 
     public UserDto convertUserToDto(UserModel user) {
-        return new UserDto(user.getId(),
+        return new UserDto(
+                user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getProfileImage(),
                 user.getDescription(),
                 user.getRoles(),
                 user.isPrivate());
-    }
-
-    public Optional<UserDto> getUserDtoByUserId(Long userId) {
-        return userRepository.findById(userId).map(
-                user -> new UserDto(
-                        user.getId(),
-                        user.getUsername(),
-                        user.getEmail(),
-                        user.getProfileImage(),
-                        user.getDescription(),
-                        user.getRoles(),
-                        user.isPrivate()));
     }
 
     @Override
