@@ -129,11 +129,11 @@ public class GameServiceImpl implements GameServicable {
         return true;
     }
 
-    public GameModel increasePlaysByOne(GameModel game){
-        game.setTimesPlayed(game.getTimesPlayed() + 1);
-        return gameRepository.save(game);
-        //might not need this but might be good for webController to increase every time page is clicked
-    }
+//    public GameModel increasePlaysByOne(GameModel game){
+//        game.setTimesPlayed(game.getTimesPlayed() + 1);
+//        return gameRepository.save(game);
+//        //might not need this but might be good for webController to increase every time page is clicked
+//    }
 
     public boolean validateExistingGame(GameModel game) {
         Matcher matcher = getGenreMatcher(game.getGenre().getGenre());

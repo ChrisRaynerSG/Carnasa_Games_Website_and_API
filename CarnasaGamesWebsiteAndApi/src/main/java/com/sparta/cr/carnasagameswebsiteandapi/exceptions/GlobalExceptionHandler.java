@@ -109,5 +109,4 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleScoreOutOfBoundsException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("FORBIDDEN", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.FORBIDDEN);
     }
-    private record ErrorResponse(Object errorDetails, String errorCode, String url){}
 }

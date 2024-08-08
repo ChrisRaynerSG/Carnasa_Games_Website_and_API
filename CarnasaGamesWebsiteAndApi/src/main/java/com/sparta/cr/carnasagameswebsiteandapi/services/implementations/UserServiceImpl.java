@@ -1,6 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.*;
 import com.sparta.cr.carnasagameswebsiteandapi.models.*;
 import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UserDto;
@@ -89,13 +90,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     @Override
     public Optional<UserModel> getUserByUsername(String username) {
-        List<UserModel> users = getAllUsers();
-        for (UserModel user : users) {
-            if (user.getUsername().equals(username)) {
-                return Optional.of(user);
-            }
-        }
-        return Optional.empty();
+        return userRepository.findByUsername(username);
     }
 
     public UserDto convertUserToDto(UserModel user) {
@@ -111,13 +106,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     @Override
     public Optional<UserModel> getUserByEmail(String email) {
-        List<UserModel> users = getAllUsers();
-        for (UserModel user : users) {
-            if (user.getEmail().equals(email)) {
-                return Optional.of(user);
-            }
-        }
-        return Optional.empty();
+        return userRepository.findByEmail(email);
     }
 
     @Override
@@ -127,27 +116,23 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     @Override
     public UserModel createUser(UserModel user) {
-        if(!validateNewUser(user)){
-            return null;
+        if(validateNewUser(user)) {
+            user.setRoles("ROLE_USER");
+            user.setEmail(user.getEmail().toLowerCase());
+            return userRepository.save(encryptPassword(user));
         }
-        user.setRoles("ROLE_USER");
-        user.setEmail(user.getEmail().toLowerCase());
-        return userRepository.save(encryptPassword(user));
+        return null;
     }
 
     @Override
     public UserModel updateUser(UserModel user) {
-        if(getUser(user.getId()).isEmpty()){
-            return null;
-        }
-        if(!validateExistingUserUpdate(user)){
-            return null;
-        }
-        else {
+        if(validateExistingUserUpdate(user)){
             user.setEmail(user.getEmail().toLowerCase());
             return userRepository.save(encryptPassword(user));
         }
-        //todo validation for images and other fields
+        else {
+            return null;
+        }
     }
 
     @Override
@@ -181,7 +166,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     public boolean validateExistingUserUpdate(UserModel user){
         if(getUser(user.getId()).isEmpty()){
-            throw new ModelAlreadyExistsException("Cannot update User as ID: " + user.getId() + " does not exist");
+            throw new ModelNotFoundException("Cannot update User as ID: " + user.getId() + " does not exist");
         }
         UserModel beforeUpdate = getUser(user.getId()).get();
         if(!passwordEncoder.matches(user.getPassword(), beforeUpdate.getPassword())){

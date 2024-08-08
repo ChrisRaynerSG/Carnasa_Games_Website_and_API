@@ -132,10 +132,10 @@ public class HighScoreServiceImpl implements HighScoreServiceable{
             throw new ModelAlreadyExistsException("Cannot create new score with ID: " + highScoreModel.getScoreId() + " already exists");
         }
         if(userService.getUser(highScoreModel.getUserModel().getId()).isEmpty()){
-            throw new InvalidUserException("Cannot create comment as user with ID: " + highScoreModel.getUserModel().getId()+" does not exist." );
+            throw new InvalidUserException("Cannot create score as user with ID: " + highScoreModel.getUserModel().getId()+" does not exist." );
         }
         if(gameService.getGame(highScoreModel.getGamesModel().getId()).isEmpty()){
-            throw new InvalidGameException("Cannot create comment as game with ID: " + highScoreModel.getGamesModel().getId() + " does not exist." );
+            throw new InvalidGameException("Cannot create score as game with ID: " + highScoreModel.getGamesModel().getId() + " does not exist." );
         }
         if(highScoreModel.getScore()>=Long.MAX_VALUE || highScoreModel.getScore()<=Long.MIN_VALUE){
             throw new ScoreOutOfBoundsException(highScoreModel.getScore().toString());

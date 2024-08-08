@@ -1,11 +1,16 @@
-package com.sparta.cr.carnasagameswebsiteandapi;
+package com.sparta.cr.carnasagameswebsiteandapi.services;
 
-import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.HighScoreModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.HighScoreRepository;
+import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.HighScoreServiceImpl;
+import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,14 +25,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class HighScoreTest {
 
     private static final Logger log = LoggerFactory.getLogger(HighScoreTest.class);
+
     @Mock
     HighScoreRepository highScoreRepository;
+    @Mock
+    UserServiceImpl userService;
+    @Mock
+    GameServiceImpl gameService;
 
     @InjectMocks
     HighScoreServiceImpl highScoreService;
@@ -37,6 +48,10 @@ public class HighScoreTest {
     private HighScoreModel highScore3;
     private List<HighScoreModel> highScoreModels;
     private List<HighScoreModel> topHighScoreModels;
+    private UserModel user1;
+    private UserModel user2;
+    private GameModel game1;
+    private GameModel game2;
 
 
     @BeforeEach
@@ -47,22 +62,25 @@ public class HighScoreTest {
         highScoreModels = new ArrayList<>();
         topHighScoreModels = new ArrayList<>();
 
-        GameModel gameModel1 = new GameModel();
-        GameModel gameModel2 = new GameModel();
-        gameModel1.setId(1L);
-        gameModel2.setId(2L);
+        game1 = new GameModel();
+        game2 = new GameModel();
+        game1.setId(1L);
+        game2.setId(2L);
 
-        UserModel userModel1 = new UserModel();
-        userModel1.setId(1L);
-        UserModel userModel2 = new UserModel();
-        userModel2.setId(2L);
+        user1 = new UserModel();
+        user1.setId(1L);
+        user2 = new UserModel();
+        user2.setId(2L);
 
-        highScore1.setGamesModel(gameModel1);
-        highScore2.setGamesModel(gameModel2);
-        highScore3.setGamesModel(gameModel2);
-        highScore1.setUserModel(userModel1);
-        highScore2.setUserModel(userModel1);
-        highScore3.setUserModel(userModel2);
+        highScore1.setGamesModel(game1);
+        highScore2.setGamesModel(game2);
+        highScore3.setGamesModel(game2);
+        highScore1.setUserModel(user1);
+        highScore2.setUserModel(user1);
+        highScore3.setUserModel(user2);
+        highScore1.setScore(100L);
+        highScore2.setScore(200L);
+        highScore3.setScore(300L);
 
         highScoreModels.add(highScore1);
         highScoreModels.add(highScore2);
@@ -71,17 +89,17 @@ public class HighScoreTest {
         for (int i = 0; i <= 40; i++) {
             HighScoreModel highScoreModel = new HighScoreModel();
             if(i%2==0) {
-                highScoreModel.setGamesModel(gameModel1);
+                highScoreModel.setGamesModel(game1);
             }
             else {
-                highScoreModel.setGamesModel(gameModel2);
+                highScoreModel.setGamesModel(game2);
             }
             if(i%3==0) {
-                highScoreModel.setUserModel(userModel1);
+                highScoreModel.setUserModel(user1);
                 highScoreModel.setDate(LocalDate.of(2000,12,25));
             }
             else {
-                highScoreModel.setUserModel(userModel2);
+                highScoreModel.setUserModel(user2);
                 highScoreModel.setDate(LocalDate.now());
             }
             highScoreModel.setScore(i*100L);
@@ -164,33 +182,67 @@ public class HighScoreTest {
         HighScoreModel highScoreModel = new HighScoreModel();
         highScoreModel.setScoreId(1L);
         when(highScoreRepository.findById(1L)).thenReturn(Optional.of(highScoreModel));
-        HighScoreModel actual = highScoreService.createHighScore(highScoreModel);
-        Assertions.assertNull(actual);
+        assertThrows(ModelAlreadyExistsException.class, () -> highScoreService.createHighScore(highScoreModel));
     }
     @Test
     void createScoreReturnsScoreWhenScoreDoesNotExist(){
         HighScoreModel highScoreModel = new HighScoreModel();
         highScoreModel.setScoreId(1L);
+        highScoreModel.setUserModel(user1);
+        highScoreModel.setGamesModel(game1);
+        highScoreModel.setScore(100L);
         when(highScoreRepository.findById(1L)).thenReturn(Optional.empty());
         when(highScoreRepository.save(highScoreModel)).thenReturn(highScoreModel);
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
         HighScoreModel actual = highScoreService.createHighScore(highScoreModel);
         Assertions.assertNotNull(actual);
     }
 
     @Test
-    void updateHighScoreReturnsNullWhenScoreDoesNotExist(){
+    void updateHighScoreThrowsExceptionWhenScoreDoesNotExist(){
         HighScoreModel highScoreModel = new HighScoreModel();
         highScoreModel.setScoreId(1L);
         when(highScoreRepository.findById(1L)).thenReturn(Optional.empty());
-        HighScoreModel actual = highScoreService.updateHighScore(highScoreModel);
-        Assertions.assertNull(actual);
+        assertThrows(ModelNotFoundException.class, () -> highScoreService.updateHighScore(highScoreModel));
+    }
+    @Test
+    void updateHighScoreThrowsExceptionWhenGameIsDifferent(){
+        HighScoreModel highScoreModel = new HighScoreModel();
+        highScoreModel.setScoreId(1L);
+        highScoreModel.setUserModel(user1);
+        highScoreModel.setGamesModel(game2);
+        highScoreModel.setScore(100L);
+        when(highScoreRepository.findById(1L)).thenReturn(Optional.of(highScore1));
+        when(highScoreRepository.save(highScoreModel)).thenReturn(highScoreModel);
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
+        assertThrows(InvalidGameException.class, () -> highScoreService.updateHighScore(highScoreModel));
+    }
+    @Test
+    void updateHighScoreThrowsExceptionWhenUserIsDifferent(){
+        HighScoreModel highScoreModel = new HighScoreModel();
+        highScoreModel.setScoreId(1L);
+        highScoreModel.setUserModel(user2);
+        highScoreModel.setGamesModel(game1);
+        highScoreModel.setScore(100L);
+        when(highScoreRepository.findById(1L)).thenReturn(Optional.of(highScore1));
+        when(highScoreRepository.save(highScoreModel)).thenReturn(highScoreModel);
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
+        assertThrows(InvalidUserException.class, () -> highScoreService.updateHighScore(highScoreModel));
     }
     @Test
     void updateHighScoreReturnsScoreWhenScoreExists(){
         HighScoreModel highScoreModel = new HighScoreModel();
         highScoreModel.setScoreId(1L);
-        when(highScoreRepository.findById(1L)).thenReturn(Optional.of(highScoreModel));
+        highScoreModel.setUserModel(user1);
+        highScoreModel.setGamesModel(game1);
+        highScoreModel.setScore(100L);
+        when(highScoreRepository.findById(1L)).thenReturn(Optional.of(highScore1));
         when(highScoreRepository.save(highScoreModel)).thenReturn(highScoreModel);
+        when(userService.getUser(1L)).thenReturn(Optional.of(user1));
+        when(gameService.getGame(1L)).thenReturn(Optional.of(game1));
         HighScoreModel actual = highScoreService.updateHighScore(highScoreModel);
         Assertions.assertNotNull(actual);
     }
