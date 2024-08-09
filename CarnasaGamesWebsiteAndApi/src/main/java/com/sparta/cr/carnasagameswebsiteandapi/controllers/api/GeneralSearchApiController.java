@@ -6,6 +6,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.HighScoreModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UserDto;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.*;
+import io.swagger.v3.oas.annotations.headers.Header;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
