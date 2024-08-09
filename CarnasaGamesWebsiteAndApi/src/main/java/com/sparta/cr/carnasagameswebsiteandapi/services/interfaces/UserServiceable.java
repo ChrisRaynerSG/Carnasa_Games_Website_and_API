@@ -2,6 +2,7 @@ package com.sparta.cr.carnasagameswebsiteandapi.services.interfaces;
 
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public interface UserServiceable extends UserDetailsService {
     Optional<UserModel> getUserByEmail(String email);
     Optional<UserModel> getUserByUsername(String username);
 
-    List<UserModel> getAllUsers();
-    List<UserModel> getUsersByName(String name);
+    Page<UserModel> getAllUsers(int page, int size);
+    Page<UserModel> getUsersByName(String name, int page, int size);
 
 }

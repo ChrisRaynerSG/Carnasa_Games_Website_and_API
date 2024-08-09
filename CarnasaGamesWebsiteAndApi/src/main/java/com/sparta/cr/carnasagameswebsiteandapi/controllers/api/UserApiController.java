@@ -41,10 +41,11 @@ public class UserApiController {
     }
 
     @GetMapping("/search/all")
-    public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAllUsers() {
-        List<EntityModel<UserDto>> allUsers = userService.getAllUsers().stream().map(this::getUserEntityModel).toList();
+    public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAllUsers(@RequestParam(name = "page", defaultValue = "0") int page,
+                                                                             @RequestParam(name = "size", defaultValue = "10") int size) {
+        List<EntityModel<UserDto>> allUsers = userService.getAllUsers(page,size).stream().map(this::getUserEntityModel).toList();
         return new ResponseEntity<>(CollectionModel.of(allUsers,WebMvcLinkBuilder
-                .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers())
+                .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers(page,size))
                 .withSelfRel()), HttpStatus.OK);
     }
 

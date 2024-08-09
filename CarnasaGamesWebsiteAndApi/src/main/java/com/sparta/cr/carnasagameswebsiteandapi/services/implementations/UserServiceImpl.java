@@ -11,6 +11,9 @@ import com.sparta.cr.carnasagameswebsiteandapi.security.SecurityUser;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.UserServiceable;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -79,13 +82,16 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     }
 
     @Override
-    public List<UserModel> getAllUsers() {
-        return userRepository.findAll();
+    public Page<UserModel> getAllUsers(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return userRepository.findAll(pageable);
     }
 
+
     @Override
-    public List<UserModel> getUsersByName(String name) {
-        return getAllUsers().stream().filter(userModel -> userModel.getUsername().toLowerCase().contains(name.toLowerCase())).toList();
+    public Page<UserModel> getUsersByName(String name, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return userRepository.findByUsernameContainingIgnoreCase(name, pageable);
     }
 
     @Override
