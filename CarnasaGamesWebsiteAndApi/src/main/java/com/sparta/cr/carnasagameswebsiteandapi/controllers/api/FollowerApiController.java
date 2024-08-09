@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/carnasa-game-api/1.0/users")
+@RequestMapping("/api/carnasa-game-api/v1/users")
 public class FollowerApiController {
 
     private final FollowerServiceImpl followerService;

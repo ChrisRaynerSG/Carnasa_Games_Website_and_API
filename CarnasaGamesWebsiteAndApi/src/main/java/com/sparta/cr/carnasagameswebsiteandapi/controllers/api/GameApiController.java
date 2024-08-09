@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
-@RequestMapping("/api/carnasa-game-api/1.0/games")
+@RequestMapping("/api/carnasa-game-api/v1/games")
 public class GameApiController {
 
     private final GameServiceImpl gameService;

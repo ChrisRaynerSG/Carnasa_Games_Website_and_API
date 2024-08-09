@@ -18,7 +18,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/carnasa-game-api/1.0/users")
+@RequestMapping("/api/carnasa-game-api/v1/users")
 public class UserApiController {
 
     private final CommentServiceImpl commentService;

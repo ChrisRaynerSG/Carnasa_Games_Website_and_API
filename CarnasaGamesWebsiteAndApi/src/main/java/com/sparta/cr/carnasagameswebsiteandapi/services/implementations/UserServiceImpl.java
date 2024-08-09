@@ -85,7 +85,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     @Override
     public List<UserModel> getUsersByName(String name) {
-        return getAllUsers().stream().filter(userModel -> userModel.getUsername().contains(name)).toList();
+        return getAllUsers().stream().filter(userModel -> userModel.getUsername().toLowerCase().contains(name.toLowerCase())).toList();
     }
 
     @Override
