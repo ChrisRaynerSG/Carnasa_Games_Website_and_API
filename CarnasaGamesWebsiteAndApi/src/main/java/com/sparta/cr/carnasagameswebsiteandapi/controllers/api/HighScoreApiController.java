@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/scores")
+@RequestMapping("/api/carnasa-game-api/v1/scores")
 public class HighScoreApiController {
 
     private final HighScoreServiceImpl highScoreService;

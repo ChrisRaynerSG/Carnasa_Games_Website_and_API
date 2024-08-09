@@ -11,6 +11,10 @@ import com.sparta.cr.carnasagameswebsiteandapi.repositories.GameRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.GameServicable;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -31,20 +35,16 @@ public class GameServiceImpl implements GameServicable {
 
     @Override
     public GameModel createGame(GameModel game) {
-        if(validateNewGame(game)){
-            game.setCreator(userServiceImpl.getUser(game.getCreator().getId()).get()); //isPresent done in validate game...
-            game.setPublished(false);
-            game.setTimesPlayed(0);
-            return gameRepository.save(game);
-        }
-        else return null;
+        validateNewGame(game);
+        game.setCreator(userServiceImpl.getUser(game.getCreator().getId()).get()); //isPresent done in validate game...
+        game.setPublished(false);
+        game.setTimesPlayed(0);
+        return gameRepository.save(game);
     }
 
     @Override
     public GameModel updateGame(GameModel game) {
-        if(getGame(game.getId()).isEmpty()) {
-            return null;
-        }
+        validateExistingGame(game);
         return gameRepository.save(game);
     }
 
@@ -64,52 +64,59 @@ public class GameServiceImpl implements GameServicable {
     }
 
     @Override
-    public List<GameModel> getAllGames() {
-        return gameRepository.findAll();
+    public Page<GameModel> getAllGames(int page, int size) {
+        Pageable pageable = PageRequest.of(page,size);
+        return gameRepository.findAll(pageable);
     }
 
     @Override
-    public List<GameModel> getGamesByGenre(String genre) {
-        return getAllGames().stream().filter(game -> game.getGenre().getGenre().equalsIgnoreCase(genre)).toList();
+    public Page<GameModel> getGamesByGenre(String genre, int page, int size) {
+        Pageable pageable = PageRequest.of(page,size);
+        return gameRepository.findAllByGenre_Genre(genre, pageable);
     }
 
     @Override
-    public List<GameModel> getGamesByTitle(String title) {
-        return getAllGames().stream().filter(game -> game.getTitle().toLowerCase().contains(title.toLowerCase())).toList();
+    public Page<GameModel> getGamesByTitle(String title, int page, int size) {
+        Pageable pageable = PageRequest.of(page,size);
+        return gameRepository.findAllByTitleContainingIgnoreCase(title, pageable);
     }
 
     @Override
-    public List<GameModel> getGamesByTitleAndGenre(String title, String genre) {
-        return getGamesByGenre(genre).stream().filter(game -> game.getTitle().toLowerCase().contains(title.toLowerCase())).toList();
-    }
-
-    @Override
-    @Transactional
-    public List<GameModel> getGamesByCreatorId(Long creatorId) {
-        if(userServiceImpl.getUser(creatorId).isEmpty()){
-            return new ArrayList<>();
-        }
-        return getAllGames().stream().filter(gameModel -> Objects.equals(gameModel.getCreator().getId(), creatorId)).toList();
+    public Page<GameModel> getGamesByTitleAndGenre(String title, String genre, int page, int size) {
+        Pageable pageable = PageRequest.of(page,size);
+        return gameRepository.findByTitleContainingIgnoreCaseAndGenre_Genre(title, genre, pageable);
     }
 
     @Override
     @Transactional
-    public List<GameModel> getGamesByCreatorUsername(String creatorName){
-        return getAllGames().stream().filter(gameModel -> gameModel.getCreator().getUsername().toLowerCase().contains(creatorName.toLowerCase())).toList();
+    public Page<GameModel> getGamesByCreatorId(Long creatorId, int page, int size) {
+        Pageable pageable = PageRequest.of(page,size);
+        return gameRepository.findByCreator_Id(creatorId, pageable);
     }
 
     @Override
-    public List<GameModel> getTopTenGames() {
-        List<GameModel> games = getAllGames();
-        games.sort(Comparator.comparingInt(GameModel::getTimesPlayed).reversed());
-        return games.subList(0, Math.min(games.size(), 10));
+    @Transactional
+    public Page<GameModel> getGamesByCreatorUsername(String creatorName, int page, int size){
+        Pageable pageable = PageRequest.of(page,size);
+        return gameRepository.findByCreator_UsernameContainingIgnoreCase(creatorName,pageable);
     }
 
     @Override
-    public List<GameModel> getTopTenGamesByGenre(String genre) {
-        List<GameModel> games = new ArrayList<>(getGamesByGenre(genre));
-        games.sort(Comparator.comparingInt(GameModel::getTimesPlayed).reversed());
-        return games.subList(0, Math.min(games.size(), 10));
+    public Page<GameModel> getTopTenGames() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by( "timesPlayed").descending());
+        return gameRepository.findAll(pageable);
+//        List<GameModel> games = getAllGames();
+//        games.sort(Comparator.comparingInt(GameModel::getTimesPlayed).reversed());
+//        return games.subList(0, Math.min(games.size(), 10));
+    }
+
+    @Override
+    public Page<GameModel> getTopTenGamesByGenre(String genre) {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("timesPlayed").descending());
+        return gameRepository.findAllByGenre_Genre(genre,pageable);
+//        List<GameModel> games = new ArrayList<>(getGamesByGenre(genre));
+//        games.sort(Comparator.comparingInt(GameModel::getTimesPlayed).reversed());
+//        return games.subList(0, Math.min(games.size(), 10));
     }
 
     public boolean validateNewGame(GameModel game) {
@@ -156,11 +163,8 @@ public class GameServiceImpl implements GameServicable {
                 throw new InvalidGenreException(game.getGenre().getGenre());
             }
         }
-
-        if(!beforeUpdate.getCreator().getId().equals(game.getCreator().getId())){
-            if(userServiceImpl.getUser(game.getCreator().getId()).isEmpty()){
-                throw new InvalidUserException("cannot update game with no creator");
-            }
+        if(userServiceImpl.getUser(game.getCreator().getId()).isEmpty()){
+            throw new InvalidUserException("cannot update game with no creator");
         }
         return true;
     }

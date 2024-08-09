@@ -131,6 +131,13 @@ public class CommentServiceImpl implements CommentServiceable {
         return getAllComments().stream().filter(commentModel -> isInDateRange(startDateDate,endDateDate,commentModel.getDate())).toList();
     }
 
+    public List<CommentModel> getCommentsByTextPartialMatch(String match){
+        return getAllComments().stream().filter(comment -> comment.getCommentText().toLowerCase().contains(match.toLowerCase())).toList();
+    }
+    public List<CommentModel> getCommentsByUsernamePartialMatch(String match){
+        return getAllComments().stream().filter(comment -> comment.getUserModel().getUsername().toLowerCase().contains(match.toLowerCase())).toList();
+    }
+
     @Override
     public List<CommentModel> getCommentsFromToday(LocalDate today) {
         return getAllComments().stream().filter(commentModel -> commentModel.getDate().equals(today)).toList();

@@ -18,7 +18,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/carnasa-game-api/v1/users")
 public class UserApiController {
 
     private final CommentServiceImpl commentService;
@@ -113,7 +113,7 @@ public class UserApiController {
 
     private List<Link> getGamesLinks(UserModel user) {
         return gameService
-                .getGamesByCreatorId(user.getId())
+                .getGamesByCreatorId(user.getId(),0,10)
                 .stream()
                 .map(game ->
                         WebMvcLinkBuilder

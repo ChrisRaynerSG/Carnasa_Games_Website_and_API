@@ -1,15 +1,18 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services;
 
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.GameAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidTitleException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GenreModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.GameRepository;
-import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
-import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.GameServicable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,8 +20,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +57,8 @@ public class GameServiceTest {
     private UserModel userModel3;
     private GenreModel genreModel1;
     private GenreModel genreModel2;
+    private Page<GameModel> page;
+    private Pageable pageable;
 
     @BeforeEach
     void setUp() {
@@ -93,10 +101,7 @@ public class GameServiceTest {
         gameModel1.setTitle("Super Sports Game!");
         gameModel2.setTitle("Tricky Puzzle Game!");
 
-        gameModelList.add(gameModel1);
-        gameModelList.add(gameModel2);
-
-        for(int i =0; i<30; i++){
+        for(int i =0; i<10; i++){
             GameModel gameModel = new GameModel();
             if(i%2==0){
                 gameModel.setGenre(genreModel1);
@@ -111,98 +116,76 @@ public class GameServiceTest {
 
     @Test
     void testGetAllGamesReturnsAllGames(){
+        gameModelList.add(gameModel1);
+        gameModelList.add(gameModel2);
+        page = new PageImpl<>(gameModelList);
         int expected = 2;
-        when(gameRepository.findAll()).thenReturn(gameModelList);
-        int actual = gameServiceImpl.getAllGames().size();
+        when(gameRepository.findAll(any(Pageable.class))).thenReturn(page);
+        int actual = gameServiceImpl.getAllGames(0,10).toList().size();
         Assertions.assertEquals(expected, actual);
     }
 
     @Test
     void testGetGamesByGenreReturnsGamesWithGenre(){
+        gameModelList.add(gameModel1);
+        page = new PageImpl<>(gameModelList);
         int expected = 1;
-        when(gameRepository.findAll()).thenReturn(gameModelList);
-        int actual = gameServiceImpl.getGamesByGenre("Puzzle").size();
+        when(gameRepository.findAllByGenre_Genre(eq("Sports"), any(Pageable.class))).thenReturn(page);
+        int actual = gameServiceImpl.getGamesByGenre("Sports", 0, 10).toList().size();
         Assertions.assertEquals(expected, actual);
     }
     @Test
     void testGetGamesByTitleReturnsGamesWithPartialMatchTitle(){
+        gameModelList.add(gameModel1);
+        page = new PageImpl<>(gameModelList);
         int expected = 1;
-        when(gameRepository.findAll()).thenReturn(gameModelList);
-        int actual = gameServiceImpl.getGamesByTitle("su").size();
+        when(gameRepository.findAllByTitleContainingIgnoreCase(eq("su"), any(Pageable.class))).thenReturn(page);
+        int actual = gameServiceImpl.getGamesByTitle("su",0,10).toList().size();
         Assertions.assertEquals(expected, actual);
     }
     @Test
     void testGetGamesByTitleAndGenreReturnsGamesThatMatch(){
+        gameModelList.add(gameModel2);
+        page = new PageImpl<>(gameModelList);
         int expected = 1;
-        when(gameRepository.findAll()).thenReturn(gameModelList);
-        int actual = gameServiceImpl.getGamesByTitleAndGenre("puzzle", "puzzle").size();
+        when(gameRepository.findByTitleContainingIgnoreCaseAndGenre_Genre(eq("puzzle"), eq("puzzle"), any(Pageable.class))).thenReturn(page);
+        int actual = gameServiceImpl.getGamesByTitleAndGenre("puzzle", "puzzle", 0 ,10).toList().size();
         Assertions.assertEquals(expected, actual);
     }
     @Test
     void testGetGamesByCreator(){
+        gameModelList.add(gameModel1);
+        page = new PageImpl<>(gameModelList);
         int expected = 1;
-
-        when(gameRepository.findAll()).thenReturn(gameModelList);
-        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.of(userModel1));
-
-        int actual = gameServiceImpl.getGamesByCreatorId(1234L).size();
-        Assertions.assertEquals(expected, actual);
-    }
-
-    @Test
-    void testGetGamesByCreatorAndNoCreatorMatchReturnsEmptyList(){
-        int expected = 0;
-        when(gameRepository.findAll()).thenReturn(gameModelList);
-        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.empty());
-        int actual = gameServiceImpl.getGamesByCreatorId(1234L).size();
-        Assertions.assertEquals(expected, actual);
-    }
-
-    @Test
-    void testGetGamesByCreatorNameAndNoCreatorMatchReturnsEmptyList(){
-        int expected = 0;
-        when(gameRepository.findAll()).thenReturn(gameModelList);
-        when(userServiceImpl.getUserByUsername("nobody")).thenReturn(Optional.empty());
-        int actual = gameServiceImpl.getGamesByCreatorUsername("nobody").size();
+        when(gameRepository.findByCreator_Id(eq(1234L), any(Pageable.class))).thenReturn(page);
+        int actual = gameServiceImpl.getGamesByCreatorId(1234L, 0,10).toList().size();
         Assertions.assertEquals(expected, actual);
     }
     @Test
     void testGetGamesByCreatorNameAndUserMatchReturnsGamesThatMatch(){
+        gameModelList.add(gameModel1);
+        gameModelList.add(gameModel2);
+        page = new PageImpl<>(gameModelList);
         int expected = 2;
-        when(gameRepository.findAll()).thenReturn(gameModelList);
-        when(userServiceImpl.getUserByUsername("ad")).thenReturn(Optional.of(userModel1));
-        int actual = gameServiceImpl.getGamesByCreatorUsername("ad").size();
+        when(gameRepository.findByCreator_UsernameContainingIgnoreCase(eq("ad"),any(Pageable.class))).thenReturn(page);
+        int actual = gameServiceImpl.getGamesByCreatorUsername("ad",0,2).toList().size();
         Assertions.assertEquals(expected, actual);
     }
     @Test
     void testGetTopTenGamesByTopClicksReturnsMostPlayedGames(){
         int expected = 10;
-        when(gameRepository.findAll()).thenReturn(topScoresList);
-        List<GameModel> topGames = gameServiceImpl.getTopTenGames();
-        for(GameModel gameModel : topGames){
-            log.atInfo().log(gameModel.toString());
-        }
-        Assertions.assertEquals(expected, topGames.size());
-    }
-    @Test
-    void testGetTopTenGamesReturnsLessThanTenIfLessThanTenGamesExist(){
-        int expected = 2;
-        when(gameRepository.findAll()).thenReturn(gameModelList);
-        List<GameModel> topGames = gameServiceImpl.getTopTenGames();
-        for(GameModel gameModel : topGames){
-            log.atInfo().log(gameModel.toString());
-        }
-        Assertions.assertEquals(expected, topGames.size());
+        page = new PageImpl<>(topScoresList);
+        when(gameRepository.findAll(any(Pageable.class))).thenReturn(page);
+        Page<GameModel> topGames = gameServiceImpl.getTopTenGames();
+        Assertions.assertEquals(expected, topGames.toList().size());
     }
     @Test
     void testGetTopTenGamesByGenreReturnsMostPlayedGamesOfGenre(){
         int expected = 10;
-        when(gameRepository.findAll()).thenReturn(topScoresList);
-        List<GameModel> topGames = gameServiceImpl.getTopTenGamesByGenre("puzzle");
-        for(GameModel gameModel : topGames){
-            log.atInfo().log(gameModel.toString());
-        }
-        Assertions.assertEquals(expected, topGames.size());
+        page = new PageImpl<>(topScoresList);
+        when(gameRepository.findAllByGenre_Genre(eq("Puzzle"),any(Pageable.class))).thenReturn(page);
+        Page<GameModel> topGames = gameServiceImpl.getTopTenGamesByGenre("Puzzle");
+        Assertions.assertEquals(expected, topGames.toList().size());
     }
     @Test
     void testWhenGetGameReturnGameIfGameExists(){
@@ -218,7 +201,7 @@ public class GameServiceTest {
         Assertions.assertTrue(gameOptional.isEmpty());
     }
     @Test
-    void testCreateNewGameReturnsNullIfGameAlreadyExists(){
+    void testCreateNewGameThrowsExceptionIfGameAlreadyExists(){
         GameModel gameModel = new GameModel();
         gameModel.setId(1234L);
         gameModel.setGenre(genreModel1);
@@ -227,6 +210,41 @@ public class GameServiceTest {
         when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel));
         when(userServiceImpl.getUser(1234L)).thenReturn(Optional.of(userModel1));
         assertThrows(ModelAlreadyExistsException.class, () -> gameServiceImpl.createGame(gameModel));
+    }
+    @Test
+    void testCreateNewGameThrowsExceptionIfCreatorDoesntExist(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
+        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.empty());
+        assertThrows(InvalidUserException.class, () -> gameServiceImpl.createGame(gameModel));
+    }
+    @Test
+    void testCreateNewGameThrowsExceptionIfGenreIsInvalid(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        GenreModel genreModel = new GenreModel();
+        genreModel.setGenre("Action");
+        gameModel.setGenre(genreModel);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
+        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.of(userModel1));
+        assertThrows(InvalidGenreException.class, () -> gameServiceImpl.createGame(gameModel));
+    }
+    @Test
+    void testCreateNewGameThrowsExceptionIfTitleIsInvalid(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("G^me-TitlE");
+        gameModel.setCreator(userModel1);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
+        when(userServiceImpl.getUser(1234L)).thenReturn(Optional.of(userModel1));
+        assertThrows(InvalidTitleException.class, () -> gameServiceImpl.createGame(gameModel));
     }
     @Test
     void testCreateNewGameReturnsGameIfSuccessful(){
@@ -243,12 +261,62 @@ public class GameServiceTest {
         Assertions.assertNotNull(createdGame);
     }
     @Test
-    void testUpdateGameReturnsNullIfGameDoesNotExist(){
+    void testUpdateGameThrowsExceptionIfGameDoesNotExist(){
         GameModel gameModel = new GameModel();
         gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        gameModel.setTimesPlayed(1);
         when(gameRepository.findById(1234L)).thenReturn(Optional.empty());
-        GameModel udpatedGame = gameServiceImpl.updateGame(gameModel);
-        Assertions.assertNull(udpatedGame);
+        assertThrows(ModelNotFoundException.class, () -> gameServiceImpl.updateGame(gameModel), "Cannot update game as ID: " + gameModel.getId() + " does not exist");
+    }
+    @Test
+    void testUpdateGameThrowsExceptionIfTimesPlayedDecreases(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        gameModel.setTimesPlayed(100);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        assertThrows(InvalidGameException.class, ()-> gameServiceImpl.updateGame(gameModel), "Cannot update game with ID: " + gameModel.getId() + " times played cannot decrease");
+    }
+    @Test
+    void testUpdateGameThrowsExceptionIfTitleIsInvalid(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("Game Title$£( SDFK;[[w");
+        gameModel.setCreator(userModel1);
+        gameModel.setTimesPlayed(10000);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        assertThrows(InvalidTitleException.class, ()-> gameServiceImpl.updateGame(gameModel));
+    }
+    @Test
+    void testUpdateGameThrowsExceptionIfGenreIsInvalid(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        GenreModel genreModel = new GenreModel();
+        genreModel.setGenre("Action");
+        gameModel.setGenre(genreModel);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        gameModel.setTimesPlayed(10000);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        assertThrows(InvalidGenreException.class, ()-> gameServiceImpl.updateGame(gameModel));
+    }
+    @Test
+    void testUpdateGameThrowsExceptionIfCreatorNotFound(){
+        GameModel gameModel = new GameModel();
+        gameModel.setId(1234L);
+        gameModel.setGenre(genreModel1);
+        gameModel.setTitle("Game Title");
+        gameModel.setCreator(userModel1);
+        gameModel.setTimesPlayed(10000);
+        when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        when(userServiceImpl.getUser(anyLong())).thenReturn(Optional.empty());
+        assertThrows(InvalidUserException.class, ()-> gameServiceImpl.updateGame(gameModel), "cannot update game with no creator");
     }
     @Test
     void testUpdateGameReturnsGameIfSuccessful(){
@@ -256,7 +324,10 @@ public class GameServiceTest {
         gameModel.setId(1234L);
         gameModel.setGenre(genreModel1);
         gameModel.setCreator(userModel1);
+        gameModel.setTitle("Game Title");
+        gameModel.setTimesPlayed(10000);
         when(gameRepository.findById(1234L)).thenReturn(Optional.of(gameModel1));
+        when(userServiceImpl.getUser(anyLong())).thenReturn(Optional.of(userModel1));
         when(gameRepository.save(any(GameModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
         GameModel updatedGame = gameServiceImpl.updateGame(gameModel);
         verify(gameRepository, times(1)).save(any(GameModel.class));

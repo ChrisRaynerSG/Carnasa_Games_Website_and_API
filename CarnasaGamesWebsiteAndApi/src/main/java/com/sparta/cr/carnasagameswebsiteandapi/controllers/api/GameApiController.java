@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
-@RequestMapping("/api/games")
+@RequestMapping("/api/carnasa-game-api/v1/games")
 public class GameApiController {
 
     private final GameServiceImpl gameService;
@@ -41,12 +41,13 @@ public class GameApiController {
     }
 
     @GetMapping("/search/all")
-    public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllGames(){
-        List<EntityModel<GameModel>> allGames = gameService.getAllGames()
+    public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllGames(@RequestParam(value = "page", defaultValue = "0") int page,
+                                                                               @RequestParam(value = "size", defaultValue = "10") int size){
+        List<EntityModel<GameModel>> allGames = gameService.getAllGames(page,size)
                 .stream()
                 .map(this::getGameEntityModel).toList();
         return new ResponseEntity<>(CollectionModel.of(allGames).add(
-                WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getAllGames()).withSelfRel()
+                WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getAllGames(page,size)).withSelfRel()
         ), HttpStatus.OK);
     }
     @GetMapping("/search/id/{gameId}")
@@ -83,29 +84,35 @@ public class GameApiController {
     }
 
     @GetMapping("/search/all/user/name/{username}")
-    public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllUserGames(@PathVariable("username") String username){
-        if (userService.getUserByUsername(username).isEmpty()){
-            throw new UsernameNotFoundException(username);
-        }
-        List<EntityModel<GameModel>> gamesByUsername = gameService.getGamesByCreatorUsername(username).stream().map(
+    public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllUserGames(@PathVariable("username") String username,
+                                                                                   @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                                   @RequestParam(value = "size", defaultValue = "10") int size){
+        List<EntityModel<GameModel>> gamesByUsername = gameService.getGamesByCreatorUsername(username,page,size).stream().map(
                 this::getGameEntityModel
         ).toList();
         if(gamesByUsername.isEmpty()){
             return ResponseEntity.notFound().build();
         }
-        return new ResponseEntity<>
-                (CollectionModel
-                        .of(gamesByUsername)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllUserGames(username)).withSelfRel())
-                        ,HttpStatus.OK);
+        CollectionModel<EntityModel<GameModel>> collectionModel = CollectionModel.of(gamesByUsername);
+        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class)
+                .getAllUserGames(username, page, size)).withSelfRel());
+        if (page > 0) {
+            collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class)
+                    .getAllUserGames(username, page - 1, size)).withRel("previous"));
+        }
+        collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class)
+                .getAllUserGames(username, page + 1, size)).withRel("next"));
+        return new ResponseEntity<>(collectionModel, HttpStatus.OK);
     }
 
     @GetMapping("/search/all/user/id/{userId}")
-    public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllUserGamesByUserId(@PathVariable("userId") Long userId){
+    public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllUserGamesByUserId(@PathVariable("userId") Long userId,
+                                                                                           @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                                           @RequestParam(value = "size", defaultValue = "10") int size){
         if(userService.getUser(userId).isEmpty()){
             throw new UserNotFoundException(userId.toString());
         }
-        List<EntityModel<GameModel>> gamesByUserId = gameService.getGamesByCreatorId(userId).stream().map(
+        List<EntityModel<GameModel>> gamesByUserId = gameService.getGamesByCreatorId(userId, page, size).stream().map(
                 this::getGameEntityModel
         ).toList();
         if(gamesByUserId.isEmpty()){
@@ -114,13 +121,15 @@ public class GameApiController {
         return new ResponseEntity<>
                 (CollectionModel
                         .of(gamesByUserId)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllUserGamesByUserId(userId)).withSelfRel())
+                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllUserGamesByUserId(userId, page, size)).withSelfRel())
                         ,HttpStatus.OK);
     }
 
     @GetMapping("/search/title/{title}")
-    public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllGamesByTitle(@PathVariable("title") String title){
-        List<EntityModel<GameModel>> gamesByPartialTitle = gameService.getGamesByTitle(title).stream().map(
+    public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllGamesByTitle(@PathVariable("title") String title,
+                                                                                      @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                                      @RequestParam(value = "size", defaultValue = "10") int size){
+        List<EntityModel<GameModel>> gamesByPartialTitle = gameService.getGamesByTitle(title, page, size).stream().map(
                 this::getGameEntityModel
         ).toList();
         if(gamesByPartialTitle.isEmpty()){
@@ -129,17 +138,19 @@ public class GameApiController {
         return new ResponseEntity<>
                 (CollectionModel
                         .of(gamesByPartialTitle)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllGamesByTitle(title)).withSelfRel())
+                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllGamesByTitle(title, page, size)).withSelfRel())
                         ,HttpStatus.OK);
     }
 
     @GetMapping("/search/genre/{genre}")
-    public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllGamesByGenre(@PathVariable("genre") String genre){
+    public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllGamesByGenre(@PathVariable("genre") String genre,
+                                                                                      @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                                      @RequestParam(value = "size", defaultValue = "10") int size){
         Matcher matcher = gameService.getGenreMatcher(genre);
         if(!matcher.matches()){
             throw new InvalidGenreException(genre);
         }
-        List<EntityModel<GameModel>> gamesByGenre = gameService.getGamesByGenre(genre).stream().map(
+        List<EntityModel<GameModel>> gamesByGenre = gameService.getGamesByGenre(genre,page,size).stream().map(
                 this::getGameEntityModel
         ).toList();
         if(gamesByGenre.isEmpty()){
@@ -148,7 +159,7 @@ public class GameApiController {
         return new ResponseEntity<>
                 (CollectionModel
                         .of(gamesByGenre)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllGamesByGenre(genre)).withSelfRel())
+                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllGamesByGenre(genre, page, size)).withSelfRel())
                         ,HttpStatus.OK);
     }
 
