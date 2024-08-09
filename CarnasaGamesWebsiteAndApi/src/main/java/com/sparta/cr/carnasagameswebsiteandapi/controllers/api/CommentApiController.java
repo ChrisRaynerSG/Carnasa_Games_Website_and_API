@@ -20,7 +20,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/comments")
+@RequestMapping("/api/carnasa-game-api/1.0/comments")
 public class CommentApiController {
 
     private final CommentServiceImpl commentService;
