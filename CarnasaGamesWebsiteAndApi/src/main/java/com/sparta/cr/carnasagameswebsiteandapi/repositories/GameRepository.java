@@ -11,7 +11,8 @@ import java.util.List;
 @Repository
 public interface GameRepository extends JpaRepository<GameModel, Long> {
     Page<GameModel> findAllByTitleContainingIgnoreCase(String title, Pageable pageable);
-    Page<GameModel> findAllByGenreContainingIgnoreCase(String genre, Pageable pageable);
+    Page<GameModel> findAllByGenre_Genre(String genre, Pageable pageable);
     Page<GameModel> findByCreator_UsernameContainingIgnoreCase(String username, Pageable pageable);
     Page<GameModel> findByCreator_Id(Long id, Pageable pageable);
+    Page<GameModel> findByTitleContainingIgnoreCaseAndGenre_Genre(String title, String genre, Pageable pageable);
 }
