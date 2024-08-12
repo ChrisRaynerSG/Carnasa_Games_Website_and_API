@@ -50,14 +50,17 @@ public class UserApiController {
     @GetMapping("/search")
     public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAllUsers(@RequestParam(name = "page", defaultValue = "0") int page,
                                                                              @RequestParam(name = "size", defaultValue = "10") int size,
-                                                                             @CurrentRole Collection<? extends GrantedAuthority> roles) {
-        boolean isAdmin = roles.stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
+                                                                             Authentication authentication) {
+
+        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
+
         if(isAdmin) {
             List<EntityModel<UserDto>> allUsers = userService.getAllUsers(page,size).stream().map(this::getUserEntityModel).toList();
             return new ResponseEntity<>(CollectionModel.of(allUsers,WebMvcLinkBuilder
-                    .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers(page,size, roles))
+                    .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers(page,size, authentication))
                     .withSelfRel()), HttpStatus.OK);
         }
+
         else {
             throw new ForbiddenRoleException();
         }
@@ -65,6 +68,9 @@ public class UserApiController {
 
     @GetMapping("/search/id/{userId}")
     public ResponseEntity<EntityModel<UserDto>> getUserById(@PathVariable Long userId) {
+
+        // if user private hide unless user OR admin
+
         if(userService.getUser(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
         }
@@ -74,6 +80,9 @@ public class UserApiController {
 
     @GetMapping("/search/name/{username}")
     public ResponseEntity<EntityModel<UserDto>> getUserByName(@PathVariable String username) {
+
+        // if user private hide unless user OR admin
+
         if(userService.getUserByUsername(username).isEmpty()) {
             throw new UsernameNotFoundException(username);
         }

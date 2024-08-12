@@ -3,6 +3,9 @@ package com.sparta.cr.carnasagameswebsiteandapi.security.jwt;
 import com.sparta.cr.carnasagameswebsiteandapi.security.SecurityUser;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -10,12 +13,18 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtUtilities {
 
-    public static final long JWT_TOKEN_VALIDITY = 5*60*60;
+    public static final long JWT_TOKEN_VALIDITY = 5*60*60*1000;
     private final SecretKey secret = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final JwtDecoder jwtDecoder;
+
+    public JwtUtilities(@Qualifier("jwtDecoder") JwtDecoder jwtDecoder) {
+        this.jwtDecoder = jwtDecoder;
+    }
 
     public String extractUsername(String token){
         return getClaimFromToken(token, Claims::getSubject);
@@ -40,6 +49,10 @@ public class JwtUtilities {
 
     public String generateToken(SecurityUser user){
         Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
+        for (Map.Entry<String,Object> claim : claims.entrySet()) {
+            System.out.println(claim.getKey() + " " + claim.getValue());
+        }
         return createToken(claims, user.getUsername());
     }
 
@@ -56,5 +69,9 @@ public class JwtUtilities {
     public Boolean validateToken(String token, SecurityUser user){
         final String username = extractUsername(token);
         return (username.equals(user.getUsername()) && !isTokenExpired(token));
+    }
+
+    public SecretKey getSecret() {
+        return secret;
     }
 }
