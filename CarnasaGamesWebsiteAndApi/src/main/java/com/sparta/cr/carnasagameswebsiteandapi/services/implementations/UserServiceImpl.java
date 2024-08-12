@@ -202,7 +202,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         return true;
     }
 
-    private boolean validatePassword(String password) {
+    public boolean validatePassword(String password) {
         return password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
     }
     private boolean usernameExists(UserModel user) {

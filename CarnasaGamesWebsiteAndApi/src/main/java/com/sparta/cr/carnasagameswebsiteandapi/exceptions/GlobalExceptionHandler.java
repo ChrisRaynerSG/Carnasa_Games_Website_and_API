@@ -114,4 +114,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleForbiddenRoleException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("FORBIDDEN", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.FORBIDDEN);
     }
+    @ExceptionHandler(PasswordMatchException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<ErrorResponse> handlePasswordMatchException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("PASSWORD_MISMATCH", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.UNAUTHORIZED);
+    }
 }
