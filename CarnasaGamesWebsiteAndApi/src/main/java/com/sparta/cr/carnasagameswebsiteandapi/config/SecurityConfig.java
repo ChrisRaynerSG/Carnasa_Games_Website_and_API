@@ -18,6 +18,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
@@ -32,6 +34,8 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 
 @Configuration
 @EnableWebSecurity
@@ -61,7 +65,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt-> jwt.decoder(jwtDecoder())))
+                        .jwt(jwt-> {
+                            jwt.decoder(jwtDecoder());
+                            jwt.jwtAuthenticationConverter(jwtAuthenticationConverter());
+                        }))
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/oauth2/authorization/google")
                         .defaultSuccessUrl("/home")
@@ -92,6 +99,22 @@ public class SecurityConfig {
 
     public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withSecretKey(secretKey).build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt-> {
+            Collection<GrantedAuthority> authorities = new ArrayList<>();
+            Collection<String> roles = jwt.getClaimAsStringList("roles");
+            if(roles != null) {
+                authorities.addAll(roles.stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .toList());
+            }
+            return authorities;
+        });
+        return converter;
     }
 
 }
