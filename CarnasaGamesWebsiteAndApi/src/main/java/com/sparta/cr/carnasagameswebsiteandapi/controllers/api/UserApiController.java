@@ -1,5 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
+import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentRole;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ForbiddenRoleException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UsernameNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
@@ -13,9 +15,11 @@ import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 
 @RestController
@@ -44,11 +48,17 @@ public class UserApiController {
     @GetMapping("/search/all")
     public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAllUsers(@RequestParam(name = "page", defaultValue = "0") int page,
                                                                              @RequestParam(name = "size", defaultValue = "10") int size,
-                                                                             Authentication authentication) {
-        List<EntityModel<UserDto>> allUsers = userService.getAllUsers(page,size).stream().map(this::getUserEntityModel).toList();
-        return new ResponseEntity<>(CollectionModel.of(allUsers,WebMvcLinkBuilder
-                .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers(page,size, authentication))
-                .withSelfRel()), HttpStatus.OK);
+                                                                             @CurrentRole Collection<? extends GrantedAuthority> roles) {
+        boolean isAdmin = roles.stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
+        if(isAdmin) {
+            List<EntityModel<UserDto>> allUsers = userService.getAllUsers(page,size).stream().map(this::getUserEntityModel).toList();
+            return new ResponseEntity<>(CollectionModel.of(allUsers,WebMvcLinkBuilder
+                    .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers(page,size, roles))
+                    .withSelfRel()), HttpStatus.OK);
+        }
+        else {
+            throw new ForbiddenRoleException();
+        }
     }
 
     @GetMapping("/search/id/{userId}")

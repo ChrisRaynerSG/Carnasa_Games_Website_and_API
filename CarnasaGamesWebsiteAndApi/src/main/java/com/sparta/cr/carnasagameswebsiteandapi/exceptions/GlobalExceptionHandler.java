@@ -105,8 +105,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
     }
     @ExceptionHandler(ScoreOutOfBoundsException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleScoreOutOfBoundsException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(ForbiddenRoleException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> handleForbiddenRoleException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("FORBIDDEN", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.FORBIDDEN);
     }
 }
