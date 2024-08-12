@@ -29,8 +29,8 @@
         <div class="row mt-4">
             <div class="col-12">
                 <h5>Search Website</h5>
-                <form class="form-inline search-form justify-content-center">
-                    <input class="form-control mr-2 mb-2 mb-md-0" type="search" placeholder="Search" aria-label="Search">
+                <form class="form-inline search-form justify-content-center" th:action="@{/searchAll}" method="get">
+                    <input class="form-control mr-2 mb-2 mb-md-0" type="search" name="query" placeholder="Search" aria-label="Search">
                     <button class="btn btn-outline-light" type="submit">Go!</button>
                 </form>
             </div>
