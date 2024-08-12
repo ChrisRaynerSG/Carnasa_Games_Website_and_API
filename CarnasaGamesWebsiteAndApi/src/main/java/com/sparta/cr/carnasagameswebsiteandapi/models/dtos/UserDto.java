@@ -1,6 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.models.dtos;
 
 import java.util.Objects;
+import java.util.Set;
 
 public class UserDto {
     private final long id;
@@ -8,10 +9,10 @@ public class UserDto {
     private final String email;
     private final String profileImage;
     private final String description;
-    private final String roles;
+    private final Set<String> roles;
     private final boolean isPrivate;
 
-    public UserDto(Long id, String username, String email, String profileImage, String description, String roles, boolean isPrivate){
+    public UserDto(Long id, String username, String email, String profileImage, String description, Set<String> roles, boolean isPrivate){
 
         this.id = id;
         this.username = username;
@@ -42,7 +43,7 @@ public class UserDto {
         return description;
     }
 
-    public String getRoles() {
+    public Set<String> getRoles() {
         return roles;
     }
 

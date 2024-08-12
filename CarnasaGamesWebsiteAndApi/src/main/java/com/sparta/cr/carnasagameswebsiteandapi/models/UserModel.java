@@ -36,8 +36,10 @@ public class UserModel {
     @Column(name = "is_private")
     private boolean isPrivate;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", schema = "games_website")
     @Column(name = "roles", nullable = false)
-    private String roles;
+    private Set<String> roles;
 
     public Long getId() {
         return id;
@@ -95,10 +97,11 @@ public class UserModel {
         isPrivate = aPrivate;
     }
 
-    public String getRoles() {
+    public Set<String> getRoles() {
         return roles;
     }
-    public void setRoles(String roles) {
+
+    public void setRoles(Set<String> roles) {
         this.roles = roles;
     }
 

@@ -42,42 +42,42 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Override
-    @Transactional
-    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-
-        OAuth2User oAuth2User = super.loadUser(userRequest);
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-        String email = (String) attributes.get("email");
-        String username = (String) attributes.getOrDefault("username", "");
-        String profileUrl = (String) attributes.getOrDefault("profileUrl", "");
-
-        if(email==null || email.isEmpty()){
-            throw new InvalidUserException("Email not found in attributes");
-        }
-        if(username.isEmpty()){
-            username = generateUsernameFromEmail(email);
-        }
-
-        Optional<UserModel> optionalUser = getUserByEmail(email);
-        UserModel userModel;
-
-        if(optionalUser.isEmpty()){
-            username = generateUniqueUsername(username);
-            UserModel user = new UserModel();
-            user.setEmail(email);
-            user.setUsername(username);
-            user.setRoles("ROLE_USER");
-            user.setProfileImage(profileUrl);
-            user.setPassword("PlaceholderPasswordToNotBreakTheModel");
-            user.setPrivate(false);
-            userModel = userRepository.save(user);
-        }
-        else {
-            userModel = optionalUser.get();
-        }
-        return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority(userModel.getRoles())), attributes, "email");
-    }
+//    @Override
+//    @Transactional
+//    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+//
+//        OAuth2User oAuth2User = super.loadUser(userRequest);
+//        Map<String, Object> attributes = oAuth2User.getAttributes();
+//        String email = (String) attributes.get("email");
+//        String username = (String) attributes.getOrDefault("username", "");
+//        String profileUrl = (String) attributes.getOrDefault("profileUrl", "");
+//
+//        if(email==null || email.isEmpty()){
+//            throw new InvalidUserException("Email not found in attributes");
+//        }
+//        if(username.isEmpty()){
+//            username = generateUsernameFromEmail(email);
+//        }
+//
+//        Optional<UserModel> optionalUser = getUserByEmail(email);
+//        UserModel userModel;
+//
+//        if(optionalUser.isEmpty()){
+//            username = generateUniqueUsername(username);
+//            UserModel user = new UserModel();
+//            user.setEmail(email);
+//            user.setUsername(username);
+//            user.setRoles(Set.of("ROLE_USER"));
+//            user.setProfileImage(profileUrl);
+//            user.setPassword("PlaceholderPasswordToNotBreakTheModel");
+//            user.setPrivate(false);
+//            userModel = userRepository.save(user);
+//        }
+//        else {
+//            userModel = optionalUser.get();
+//        }
+//        return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority(userModel.getRoles())), attributes, "email");
+//    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -126,7 +126,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     @Override
     public UserModel createUser(UserModel user) {
         if(validateNewUser(user)) {
-            user.setRoles("ROLE_USER");
+            user.setRoles(Set.of("ROLE_USER"));
             user.setEmail(user.getEmail().toLowerCase());
             return userRepository.save(encryptPassword(user));
         }
