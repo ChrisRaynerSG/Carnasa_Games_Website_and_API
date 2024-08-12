@@ -1,5 +1,6 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
+import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentOwner;
 import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentRole;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ForbiddenRoleException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
@@ -14,6 +15,7 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
@@ -45,7 +47,7 @@ public class UserApiController {
         this.favouriteGameService = favouriteGameService;
     }
 
-    @GetMapping("/search/all")
+    @GetMapping("/search")
     public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAllUsers(@RequestParam(name = "page", defaultValue = "0") int page,
                                                                              @RequestParam(name = "size", defaultValue = "10") int size,
                                                                              @CurrentRole Collection<? extends GrantedAuthority> roles) {
@@ -91,7 +93,10 @@ public class UserApiController {
     }
 
     @PutMapping("/update/{userId}")
-    public ResponseEntity<EntityModel<UserModel>> updateUser(@PathVariable Long userId, @RequestBody UserModel userModel) {
+    public ResponseEntity<EntityModel<UserModel>> updateUser(@PathVariable Long userId,
+                                                             @RequestBody UserModel userModel,
+                                                             @CurrentOwner String username,
+                                                             @CurrentRole Collection<? extends GrantedAuthority> roles) {
         if(userService.getUser(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
         }
