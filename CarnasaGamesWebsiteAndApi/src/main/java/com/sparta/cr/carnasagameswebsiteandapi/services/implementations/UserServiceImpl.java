@@ -11,6 +11,12 @@ import com.sparta.cr.carnasagameswebsiteandapi.security.SecurityUser;
 import com.sparta.cr.carnasagameswebsiteandapi.services.interfaces.UserServiceable;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,8 +33,8 @@ import java.util.*;
 @Service
 public class UserServiceImpl extends DefaultOAuth2UserService implements UserServiceable {
 
-    private UserRepository userRepository;
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -36,42 +42,42 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Override
-    @Transactional
-    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-
-        OAuth2User oAuth2User = super.loadUser(userRequest);
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-        String email = (String) attributes.get("email");
-        String username = (String) attributes.getOrDefault("username", "");
-        String profileUrl = (String) attributes.getOrDefault("profileUrl", "");
-
-        if(email==null || email.isEmpty()){
-            throw new InvalidUserException("Email not found in attributes");
-        }
-        if(username.isEmpty()){
-            username = generateUsernameFromEmail(email);
-        }
-
-        Optional<UserModel> optionalUser = getUserByEmail(email);
-        UserModel userModel;
-
-        if(optionalUser.isEmpty()){
-            username = generateUniqueUsername(username);
-            UserModel user = new UserModel();
-            user.setEmail(email);
-            user.setUsername(username);
-            user.setRoles("ROLE_USER");
-            user.setProfileImage(profileUrl);
-            user.setPassword("PlaceholderPasswordToNotBreakTheModel");
-            user.setPrivate(false);
-            userModel = userRepository.save(user);
-        }
-        else {
-            userModel = optionalUser.get();
-        }
-        return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority(userModel.getRoles())), attributes, "email");
-    }
+//    @Override
+//    @Transactional
+//    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+//
+//        OAuth2User oAuth2User = super.loadUser(userRequest);
+//        Map<String, Object> attributes = oAuth2User.getAttributes();
+//        String email = (String) attributes.get("email");
+//        String username = (String) attributes.getOrDefault("username", "");
+//        String profileUrl = (String) attributes.getOrDefault("profileUrl", "");
+//
+//        if(email==null || email.isEmpty()){
+//            throw new InvalidUserException("Email not found in attributes");
+//        }
+//        if(username.isEmpty()){
+//            username = generateUsernameFromEmail(email);
+//        }
+//
+//        Optional<UserModel> optionalUser = getUserByEmail(email);
+//        UserModel userModel;
+//
+//        if(optionalUser.isEmpty()){
+//            username = generateUniqueUsername(username);
+//            UserModel user = new UserModel();
+//            user.setEmail(email);
+//            user.setUsername(username);
+//            user.setRoles(Set.of("ROLE_USER"));
+//            user.setProfileImage(profileUrl);
+//            user.setPassword("PlaceholderPasswordToNotBreakTheModel");
+//            user.setPrivate(false);
+//            userModel = userRepository.save(user);
+//        }
+//        else {
+//            userModel = optionalUser.get();
+//        }
+//        return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority(userModel.getRoles())), attributes, "email");
+//    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -79,13 +85,16 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     }
 
     @Override
-    public List<UserModel> getAllUsers() {
-        return userRepository.findAll();
+    public Page<UserModel> getAllUsers(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return userRepository.findAll(pageable);
     }
 
+
     @Override
-    public List<UserModel> getUsersByName(String name) {
-        return getAllUsers().stream().filter(userModel -> userModel.getUsername().toLowerCase().contains(name.toLowerCase())).toList();
+    public Page<UserModel> getUsersByName(String name, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return userRepository.findByUsernameContainingIgnoreCase(name, pageable);
     }
 
     @Override
@@ -117,7 +126,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
     @Override
     public UserModel createUser(UserModel user) {
         if(validateNewUser(user)) {
-            user.setRoles("ROLE_USER");
+            user.setRoles(Set.of("ROLE_USER"));
             user.setEmail(user.getEmail().toLowerCase());
             return userRepository.save(encryptPassword(user));
         }
@@ -193,7 +202,7 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         return true;
     }
 
-    private boolean validatePassword(String password) {
+    public boolean validatePassword(String password) {
         return password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
     }
     private boolean usernameExists(UserModel user) {

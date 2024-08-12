@@ -1,5 +1,8 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
+import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentOwner;
+import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentRole;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ForbiddenRoleException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UsernameNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
@@ -12,9 +15,13 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 
 @RestController
@@ -40,16 +47,30 @@ public class UserApiController {
         this.favouriteGameService = favouriteGameService;
     }
 
-    @GetMapping("/search/all")
-    public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAllUsers() {
-        List<EntityModel<UserDto>> allUsers = userService.getAllUsers().stream().map(this::getUserEntityModel).toList();
-        return new ResponseEntity<>(CollectionModel.of(allUsers,WebMvcLinkBuilder
-                .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers())
-                .withSelfRel()), HttpStatus.OK);
+    @GetMapping("/search")
+    public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAllUsers(@RequestParam(name = "page", defaultValue = "0") int page,
+                                                                             @RequestParam(name = "size", defaultValue = "10") int size,
+                                                                             Authentication authentication) {
+
+        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
+
+        if(isAdmin) {
+            List<EntityModel<UserDto>> allUsers = userService.getAllUsers(page,size).stream().map(this::getUserEntityModel).toList();
+            return new ResponseEntity<>(CollectionModel.of(allUsers,WebMvcLinkBuilder
+                    .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers(page,size, authentication))
+                    .withSelfRel()), HttpStatus.OK);
+        }
+
+        else {
+            throw new ForbiddenRoleException();
+        }
     }
 
     @GetMapping("/search/id/{userId}")
     public ResponseEntity<EntityModel<UserDto>> getUserById(@PathVariable Long userId) {
+
+        // if user private hide unless user OR admin
+
         if(userService.getUser(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
         }
@@ -59,6 +80,9 @@ public class UserApiController {
 
     @GetMapping("/search/name/{username}")
     public ResponseEntity<EntityModel<UserDto>> getUserByName(@PathVariable String username) {
+
+        // if user private hide unless user OR admin
+
         if(userService.getUserByUsername(username).isEmpty()) {
             throw new UsernameNotFoundException(username);
         }
@@ -78,7 +102,10 @@ public class UserApiController {
     }
 
     @PutMapping("/update/{userId}")
-    public ResponseEntity<EntityModel<UserModel>> updateUser(@PathVariable Long userId, @RequestBody UserModel userModel) {
+    public ResponseEntity<EntityModel<UserModel>> updateUser(@PathVariable Long userId,
+                                                             @RequestBody UserModel userModel,
+                                                             @CurrentOwner String username,
+                                                             @CurrentRole Collection<? extends GrantedAuthority> roles) {
         if(userService.getUser(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
         }
