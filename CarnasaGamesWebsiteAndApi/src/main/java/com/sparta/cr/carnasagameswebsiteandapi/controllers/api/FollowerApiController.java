@@ -1,6 +1,8 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
+import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentOwner;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModel;
+import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.FollowerServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,19 +31,23 @@ public class FollowerApiController {
     }
 
     @GetMapping("/search/id/{userId}/following")
-    public ResponseEntity<CollectionModel<EntityModel<FollowerModel>>> getAllFollowingByUserId(@PathVariable("userId") Long userId){
+    public ResponseEntity<CollectionModel<EntityModel<FollowerModel>>> getAllFollowingByUserId(@PathVariable("userId") Long userId,
+                                                                                               @CurrentOwner String currentUser,
+                                                                                               Authentication authentication){
         List<EntityModel<FollowerModel>> following = followerService.getAllFollowingByUserId(userId).stream().map( followerModel ->
-                getUserEntityModel(followerModel).add(getUserLink(followerModel))
+                getUserEntityModel(followerModel).add(getUserLink(followerModel, currentUser, authentication))
         ).toList();
-        return ResponseEntity.ok(CollectionModel.of(following).add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userId)).withSelfRel()));
+        return ResponseEntity.ok(CollectionModel.of(following).add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userId, currentUser, authentication)).withSelfRel()));
     }
 
     @GetMapping("/search/id/{userId}/followers")
-    public ResponseEntity<CollectionModel<EntityModel<FollowerModel>>> getAllFollowersByUserId(@PathVariable("userId") Long userId){
+    public ResponseEntity<CollectionModel<EntityModel<FollowerModel>>> getAllFollowersByUserId(@PathVariable("userId") Long userId,
+                                                                                               @CurrentOwner String currentUser,
+                                                                                               Authentication authentication){
         List<EntityModel<FollowerModel>> followers = followerService.getAllFollowersByUserId(userId).stream().map( followerModel ->
-                getUserEntityModel(followerModel).add(getFollowerLink(followerModel))
+                getUserEntityModel(followerModel).add(getFollowerLink(followerModel, currentUser, authentication))
         ).toList();
-        return ResponseEntity.ok(CollectionModel.of(followers).add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userId)).withSelfRel()));
+        return ResponseEntity.ok(CollectionModel.of(followers).add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userId, currentUser, authentication)).withSelfRel()));
     }
 
     @GetMapping("/search/id/{userId}/followers/number")
@@ -68,14 +75,35 @@ public class FollowerApiController {
     }
 
 
-    private Link getUserLink(FollowerModel followerModel) {
-        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getUser().getId())).withRel("Following: " + followerModel.getUser().getUsername());
+    private Link getUserLink(FollowerModel followerModel, String currentUser, Authentication authentication) {
+        if(isUserPrivateAndNotVisible(authentication, currentUser, followerModel)){
+            return Link.of("").withRel("Private user");
+        }
+        else {
+            return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getUser().getId(), currentUser, authentication)).withRel("Following: " + followerModel.getUser().getUsername());
+        }
     }
-    private Link getFollowerLink(FollowerModel followerModel) {
-        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getFollower().getId())).withRel("Follower: " + followerModel.getFollower().getUsername());
+    private Link getFollowerLink(FollowerModel followerModel, String currentUser, Authentication authentication) {
+        if(isFollowerPrivateAndNotVisible(authentication, currentUser, followerModel)){
+            return Link.of("").withRel("Private user");
+        }
+        else {
+            return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getFollower().getId(), currentUser, authentication)).withRel("Follower: " + followerModel.getFollower().getUsername());
+        }
     }
 
     private EntityModel<FollowerModel> getUserEntityModel(FollowerModel followerModel) {
         return EntityModel.of(followerModel);
     }
+    private boolean isUserPrivateAndNotVisible(Authentication authentication, String currentUser, FollowerModel followerModel) {
+        return followerModel.getUser().isPrivate()
+                && authentication.getAuthorities().stream().noneMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))
+                && !followerModel.getUser().getUsername().equals(currentUser);
+    }
+    private boolean isFollowerPrivateAndNotVisible(Authentication authentication, String currentUser, FollowerModel followerModel) {
+        return followerModel.getFollower().isPrivate()
+                && authentication.getAuthorities().stream().noneMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))
+                && !followerModel.getFollower().getUsername().equals(currentUser);
+    }
+    //todo update post and delete methods so only admins or current user can change
 }
