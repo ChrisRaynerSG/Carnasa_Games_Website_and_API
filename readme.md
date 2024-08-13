@@ -92,7 +92,7 @@ Swagger offers a user-friendly interface to interact with the API, making it eas
 - **Access Control**:
   - Private user accounts are restricted to the account owner and Admins.
   - Admins can perform any action on the API, while regular users are limited to managing their own content.
-
+  - To recieve a JWT for authorization, login via the Authentication API Controller `POST /login`.
 
 ---
 
