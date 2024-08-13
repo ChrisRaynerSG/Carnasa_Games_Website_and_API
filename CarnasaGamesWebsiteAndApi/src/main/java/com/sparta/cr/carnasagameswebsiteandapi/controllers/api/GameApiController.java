@@ -45,14 +45,25 @@ public class GameApiController {
     public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllGames(@RequestParam(value = "page", defaultValue = "0") int page,
                                                                                @RequestParam(value = "size", defaultValue = "10") int size,
                                                                                Authentication authentication){
-        List<EntityModel<GameModel>> allGames = gameService.getAllGames(page,size)
-                .stream()
-                .map(
-                        game -> getGameEntityModel(game, authentication.getName(), authentication)
-                ).toList();
-        return new ResponseEntity<>(CollectionModel.of(allGames).add(
-                WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getAllGames(page,size,authentication)).withSelfRel()
-        ), HttpStatus.OK);
+        if(authentication==null){
+            List<EntityModel<GameModel>> allGames = gameService.getAllGames(page, size)
+                    .stream()
+                    .map(EntityModel::of
+                    ).toList();
+            return new ResponseEntity<>(CollectionModel.of(allGames).add(
+                    WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getAllGames(page, size, null)).withSelfRel()
+            ), HttpStatus.OK);
+        }
+        else {
+            List<EntityModel<GameModel>> allGames = gameService.getAllGames(page, size)
+                    .stream()
+                    .map(
+                            game -> getGameEntityModel(game, authentication.getName(), authentication)
+                    ).toList();
+            return new ResponseEntity<>(CollectionModel.of(allGames).add(
+                    WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getAllGames(page, size, authentication)).withSelfRel()
+            ), HttpStatus.OK);
+        }
     }
     @GetMapping("/search/id/{gameId}")
     public ResponseEntity<EntityModel<GameModel>> getGameById(@PathVariable("gameId") Long gameId,

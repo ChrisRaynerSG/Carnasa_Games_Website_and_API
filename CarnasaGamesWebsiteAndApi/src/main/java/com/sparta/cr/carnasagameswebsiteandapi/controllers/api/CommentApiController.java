@@ -14,7 +14,10 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -38,8 +41,9 @@ public class CommentApiController {
 
     @GetMapping("/search/all")
     public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllComments(Authentication authentication) {
+        Authentication finalAuthentication = anonymousAuthentication(authentication);
         List<EntityModel<CommentModel>> comments = commentService.getAllComments()
-                .stream().map(comment -> getCommentEntityModel(comment, authentication.getName(), authentication)).toList();
+                .stream().map(comment -> getCommentEntityModel(comment, finalAuthentication.getName(), finalAuthentication)).toList();
         return new ResponseEntity<>(CollectionModel.of(comments).add(
                 WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getAllComments(authentication)).withSelfRel())
                 , HttpStatus.OK);
@@ -169,5 +173,12 @@ public class CommentApiController {
                 && authentication.getAuthorities().stream().noneMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))
                 && !commentModel.getUserModel().getUsername().equals(currentUser);
 
+    }
+
+    private Authentication anonymousAuthentication(Authentication authentication) {
+        if(authentication == null){
+            authentication = SecurityContextHolder.getContext().getAuthentication();
+        }
+        return authentication;
     }
 }

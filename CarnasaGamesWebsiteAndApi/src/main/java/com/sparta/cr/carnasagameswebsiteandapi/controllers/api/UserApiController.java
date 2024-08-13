@@ -46,21 +46,16 @@ public class UserApiController {
     public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAllUsers(@RequestParam(name = "page", defaultValue = "0") int page,
                                                                              @RequestParam(name = "size", defaultValue = "10") int size,
                                                                              Authentication authentication) {
-
-        if(authentication.equals(null)){
+        if(authentication == null || !isRoleAdmin(authentication)){
             throw new ForbiddenRoleException();
         }
-        if(isRoleAdmin(authentication)) {
+        else {
             List<EntityModel<UserDto>> allUsers = userService.getAllUsers(page,size).stream().map(
                     user -> getUserEntityModel(user, "Admin", authentication)
             ).toList();
             return new ResponseEntity<>(CollectionModel.of(allUsers,WebMvcLinkBuilder
                     .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers(page,size, authentication))
                     .withSelfRel()), HttpStatus.OK);
-        }
-
-        else {
-            throw new ForbiddenRoleException();
         }
     }
 
