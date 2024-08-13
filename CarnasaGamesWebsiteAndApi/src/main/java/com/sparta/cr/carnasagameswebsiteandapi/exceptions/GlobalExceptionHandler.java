@@ -119,4 +119,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handlePasswordMatchException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("PASSWORD_MISMATCH", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.UNAUTHORIZED);
     }
+    @ExceptionHandler(GenericUnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<ErrorResponse> handleGenericUnauthorizedException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<>(new ErrorResponse("UNAUTHORIZED", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.UNAUTHORIZED);
+    }
 }

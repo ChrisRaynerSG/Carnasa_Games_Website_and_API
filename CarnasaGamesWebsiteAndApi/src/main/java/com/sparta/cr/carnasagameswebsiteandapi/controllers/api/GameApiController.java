@@ -1,9 +1,11 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.HighScoreModel;
+import com.sparta.cr.carnasagameswebsiteandapi.security.jwt.AnonymousAuthentication;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.CommentServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.HighScoreServiceImpl;
@@ -45,52 +47,45 @@ public class GameApiController {
     public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getAllGames(@RequestParam(value = "page", defaultValue = "0") int page,
                                                                                @RequestParam(value = "size", defaultValue = "10") int size,
                                                                                Authentication authentication){
-        if(authentication==null){
-            List<EntityModel<GameModel>> allGames = gameService.getAllGames(page, size)
-                    .stream()
-                    .map(EntityModel::of
-                    ).toList();
-            return new ResponseEntity<>(CollectionModel.of(allGames).add(
-                    WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getAllGames(page, size, null)).withSelfRel()
-            ), HttpStatus.OK);
-        }
-        else {
-            List<EntityModel<GameModel>> allGames = gameService.getAllGames(page, size)
-                    .stream()
-                    .map(
-                            game -> getGameEntityModel(game, authentication.getName(), authentication)
-                    ).toList();
-            return new ResponseEntity<>(CollectionModel.of(allGames).add(
-                    WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getAllGames(page, size, authentication)).withSelfRel()
-            ), HttpStatus.OK);
-        }
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
+        List<EntityModel<GameModel>> allGames = gameService.getAllGames(page, size)
+                .stream()
+                .map(
+                        game -> getGameEntityModel(game, finalAuthentication.getName(), finalAuthentication)
+                ).toList();
+        return new ResponseEntity<>(CollectionModel.of(allGames).add(
+                WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getAllGames(page, size, finalAuthentication)).withSelfRel()
+        ), HttpStatus.OK);
     }
     @GetMapping("/search/id/{gameId}")
     public ResponseEntity<EntityModel<GameModel>> getGameById(@PathVariable("gameId") Long gameId,
                                                               Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         if(gameService.getGame(gameId).isEmpty()){
             return ResponseEntity.notFound().build();
         }
         GameModel gameModel = gameService.getGame(gameId).get();
-        return new ResponseEntity<>(getGameEntityModel(gameModel, authentication.getName(), authentication), HttpStatus.OK);
+        return new ResponseEntity<>(getGameEntityModel(gameModel, finalAuthentication.getName(), finalAuthentication), HttpStatus.OK);
     }
 
     @GetMapping("/search/top10")
     public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getTop10Games(Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         List<EntityModel<GameModel>> topTenGames = gameService.getTopTenGames().stream().map(
-                game -> getGameEntityModel(game, authentication.getName(), authentication)
+                game -> getGameEntityModel(game, finalAuthentication.getName(), finalAuthentication)
         ).toList();
         return new ResponseEntity<>
                 (CollectionModel
                         .of(topTenGames)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getTop10Games(authentication)).withSelfRel())
+                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getTop10Games(finalAuthentication)).withSelfRel())
                         ,HttpStatus.OK);
     }
 
     @GetMapping("/search/top10/{genre}")
     public ResponseEntity<CollectionModel<EntityModel<GameModel>>> getTop10GamesByGenre(@PathVariable("genre") String genre,Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         List<EntityModel<GameModel>> topTenGames = gameService.getTopTenGamesByGenre(genre).stream().map(
-                game -> getGameEntityModel(game, authentication.getName(), authentication)
+                game -> getGameEntityModel(game, finalAuthentication.getName(), finalAuthentication)
         ).toList();
         return new ResponseEntity<>
                 (CollectionModel
@@ -104,23 +99,23 @@ public class GameApiController {
                                                                                    @RequestParam(value = "page", defaultValue = "0") int page,
                                                                                    @RequestParam(value = "size", defaultValue = "10") int size,
                                                                                    Authentication authentication){
-
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         List<EntityModel<GameModel>> gamesByUsername = gameService
                 .getGamesByCreatorUsername(username,page,size).stream().map(
-                game -> getGameEntityModel(game, authentication.getName(), authentication)
+                game -> getGameEntityModel(game, finalAuthentication.getName(), finalAuthentication)
         ).toList();
         if(gamesByUsername.isEmpty()){
             return ResponseEntity.notFound().build();
         }
         CollectionModel<EntityModel<GameModel>> collectionModel = CollectionModel.of(gamesByUsername);
         collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class)
-                .getAllUserGames(username, page, size,authentication)).withSelfRel());
+                .getAllUserGames(username, page, size,finalAuthentication)).withSelfRel());
         if (page > 0) {
             collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class)
-                    .getAllUserGames(username, page - 1, size,authentication)).withRel("previous"));
+                    .getAllUserGames(username, page - 1, size,finalAuthentication)).withRel("previous"));
         }
         collectionModel.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class)
-                .getAllUserGames(username, page + 1, size,authentication)).withRel("next"));
+                .getAllUserGames(username, page + 1, size,finalAuthentication)).withRel("next"));
         return new ResponseEntity<>(collectionModel, HttpStatus.OK);
     }
 
@@ -130,11 +125,12 @@ public class GameApiController {
                                                                                            @RequestParam(value = "size", defaultValue = "10") int size,
                                                                                            Authentication authentication){
 
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         if(userService.getUser(userId).isEmpty()){
             throw new UserNotFoundException(userId.toString());
         }
         List<EntityModel<GameModel>> gamesByUserId = gameService.getGamesByCreatorId(userId, page, size).stream().map(
-                game -> getGameEntityModel(game, authentication.getName(), authentication)
+                game -> getGameEntityModel(game, finalAuthentication.getName(), finalAuthentication)
         ).toList();
         if(gamesByUserId.isEmpty()){
             return ResponseEntity.notFound().build();
@@ -142,7 +138,7 @@ public class GameApiController {
         return new ResponseEntity<>
                 (CollectionModel
                         .of(gamesByUserId)
-                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllUserGamesByUserId(userId, page, size, authentication)).withSelfRel())
+                        .add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getAllUserGamesByUserId(userId, page, size, finalAuthentication)).withSelfRel())
                         ,HttpStatus.OK);
     }
 
@@ -189,6 +185,9 @@ public class GameApiController {
     @PostMapping("/new")
     public ResponseEntity<EntityModel<GameModel>> createGame(@RequestBody GameModel gameModel,
                                                              Authentication authentication){
+        if(authentication==null){
+            throw new GenericUnauthorizedException("Please login before creating a new game");
+        }
         //add endpoint security so only registered members can create game, also pull game creator from current owner
         if(!gameService.validateNewGame(gameModel)){
             return ResponseEntity.badRequest().build();
@@ -203,6 +202,9 @@ public class GameApiController {
     public ResponseEntity updateGame(@PathVariable("gameId") Long gameId,
                                      @RequestBody GameModel gameModel,
                                      Authentication authentication){
+        if(authentication==null){
+            throw new GenericUnauthorizedException("Please login as admin or user: " + gameModel.getCreator().getId() + " before updating this game."); //may need to change this to update how many times games are played in the future.
+        }
         if(gameService.getGame(gameId).isEmpty()){
             return ResponseEntity.notFound().build();
         }
@@ -219,6 +221,12 @@ public class GameApiController {
     @DeleteMapping("/delete/{gameId}")
     public ResponseEntity deleteGame(@PathVariable("gameId") Long gameId,
                                      Authentication authentication){
+        if(authentication==null){
+            if(gameService.getGame(gameId).isEmpty()){
+                return ResponseEntity.notFound().build();
+            }
+            throw new GenericUnauthorizedException("Please login as admin or user: " + gameService.getGame(gameId).get().getCreator().getId() + " before deleting this game.");
+        }
         // can only delete if game creator or admin
         if(gameService.getGame(gameId).isEmpty()){
             return ResponseEntity.notFound().build();
@@ -265,8 +273,7 @@ public class GameApiController {
                 && !userService.getUser(game.getCreator().getId()).get().getUsername().equals(currentUser);
     }
 
-    private List<Link> getGameComments(GameModel gameModel, String currentUser, Authentication authentication){
-        //update to hide username with private account
+    private List<Link> getGameComments(GameModel gameModel, Authentication authentication){
         return commentService.getCommentsByGame(gameModel.getId())
                 .stream().map(comment ->
                         WebMvcLinkBuilder
@@ -277,7 +284,7 @@ public class GameApiController {
 
     private EntityModel<GameModel> getGameEntityModel(GameModel gameModel, String currentUser, Authentication authentication){
         Link selfLink = WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getGameById(gameModel.getId(),authentication)).withSelfRel();
-        return EntityModel.of(gameModel, selfLink, getGameCreator(gameModel, currentUser, authentication)).add(getGameScores(gameModel, currentUser, authentication)).add(getGameComments(gameModel, currentUser, authentication));
+        return EntityModel.of(gameModel, selfLink, getGameCreator(gameModel, currentUser, authentication)).add(getGameScores(gameModel, currentUser, authentication)).add(getGameComments(gameModel, authentication));
 
     }
 }

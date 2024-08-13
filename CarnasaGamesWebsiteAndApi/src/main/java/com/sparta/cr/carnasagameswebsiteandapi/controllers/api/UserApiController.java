@@ -1,10 +1,13 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ForbiddenRoleException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UsernameNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UserDto;
+import com.sparta.cr.carnasagameswebsiteandapi.security.jwt.AnonymousAuthentication;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
@@ -62,13 +65,14 @@ public class UserApiController {
     @GetMapping("/search/id/{userId}")
     public ResponseEntity<EntityModel<UserDto>> getUserById(@PathVariable Long userId, Authentication authentication) {
 
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         // if user private hide unless user OR admin
         if(userService.getUser(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
         }
-        if(isAccountVisible(userId, authentication.getName(), authentication)) {
+        if(isAccountVisible(userId, finalAuthentication.getName(), finalAuthentication)) {
             UserModel userModel = userService.getUser(userId).get();
-            return new ResponseEntity<>(getUserEntityModel(userModel, authentication.getName(), authentication),HttpStatus.OK);
+            return new ResponseEntity<>(getUserEntityModel(userModel, finalAuthentication.getName(), finalAuthentication),HttpStatus.OK);
         }
         else{
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
@@ -77,23 +81,27 @@ public class UserApiController {
 
     @GetMapping("/search/name/{username}")
     public ResponseEntity<EntityModel<UserDto>> getUserByName(@PathVariable String username, Authentication authentication ) {
-        // if user private hide unless user OR admin
+
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
 
         if(userService.getUserByUsername(username).isEmpty()) {
             throw new UsernameNotFoundException(username);
         }
         UserModel userModel = userService.getUserByUsername(username).get();
-        return new ResponseEntity<>(getUserEntityModel(userModel, authentication.getName(), authentication),HttpStatus.OK);
+        return new ResponseEntity<>(getUserEntityModel(userModel, finalAuthentication.getName(), finalAuthentication),HttpStatus.OK);
     }
 
     @PostMapping("/new")
     public ResponseEntity<EntityModel<UserDto>> createUser(@RequestBody UserModel userModel, Authentication authentication) {
+
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
+
         if(!userService.validateNewUser(userModel)){
             return ResponseEntity.badRequest().build();
         }
         UserModel newUser = userService.createUser(userModel);
         URI location = URI.create("/api/users/search/id/"+newUser.getId());
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(newUser.getId(), authentication)).withSelfRel();
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(newUser.getId(), finalAuthentication)).withSelfRel();
         return ResponseEntity.created(location).body(EntityModel.of(userService.convertUserToDto(newUser)).add(selfLink));
     }
 
@@ -101,7 +109,9 @@ public class UserApiController {
     public ResponseEntity<EntityModel<UserModel>> updateUser(@PathVariable Long userId,
                                                              @RequestBody UserModel userModel,
                                                              Authentication authentication) {
-
+        if(authentication == null){
+            throw new GenericUnauthorizedException("Please login as Admin or user: " + userId + " to update user." );
+        }
         if(userService.getUser(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
         }
@@ -119,6 +129,9 @@ public class UserApiController {
     @DeleteMapping("/delete/{userId}")
     public ResponseEntity<EntityModel<UserModel>> deleteUser(@PathVariable Long userId, Authentication authentication) {
 
+        if(authentication == null){
+            throw new GenericUnauthorizedException("Please login as Admin or user: " + userId + " to delete user." );
+        }
         if(userService.getUser(userId).isEmpty()) {
             return ResponseEntity.notFound().build();
         }

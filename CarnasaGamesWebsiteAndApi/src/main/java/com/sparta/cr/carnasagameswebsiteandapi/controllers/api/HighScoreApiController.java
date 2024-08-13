@@ -1,8 +1,11 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
 import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentOwner;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.HighScoreModel;
+import com.sparta.cr.carnasagameswebsiteandapi.security.jwt.AnonymousAuthentication;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.HighScoreServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
@@ -37,8 +40,9 @@ public class HighScoreApiController {
 
     @GetMapping("/search/all")
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getAllHighScores(Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getAllHighScores().stream().map(
-        score -> getHighScoreEntityModel(score, authentication.getName(), authentication)).toList();
+        score -> getHighScoreEntityModel(score, finalAuthentication.getName(), finalAuthentication)).toList();
         return new ResponseEntity<>(CollectionModel.of(highScores).add(
                 WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores(authentication)).withSelfRel()
         ), HttpStatus.OK);
@@ -46,22 +50,24 @@ public class HighScoreApiController {
 
     @GetMapping("/search/{scoreId}")
     public ResponseEntity<EntityModel<HighScoreModel>> getScoreById(@PathVariable Long scoreId, Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         if(highScoreService.getHighScore(scoreId).isEmpty()){
             return ResponseEntity.notFound().build();
         }
         HighScoreModel highScoreModel = highScoreService.getHighScore(scoreId).get();
-        return ResponseEntity.ok(getHighScoreEntityModel(highScoreModel, authentication.getName(), authentication).add(
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores(authentication)).withRel("All Scores")
+        return ResponseEntity.ok(getHighScoreEntityModel(highScoreModel, finalAuthentication.getName(),finalAuthentication).add(
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores(finalAuthentication)).withRel("All Scores")
         ));
     }
 
     @GetMapping("/search/games/{gameId}")
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByGameId(@PathVariable Long gameId, Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         if(gameService.getGame(gameId).isEmpty()){
             throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByGame(gameId).stream().map(
-                score -> getHighScoreEntityModel(score, authentication.getName(), authentication)).toList();
+                score -> getHighScoreEntityModel(score, finalAuthentication.getName(), finalAuthentication)).toList();
         if(highScores.isEmpty()){
             return ResponseEntity.notFound().build();
         }
@@ -69,11 +75,12 @@ public class HighScoreApiController {
     }
     @GetMapping("/search/users/{userId}")
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByUserId(@PathVariable Long userId, Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         if(userService.getUser(userId).isEmpty()){
             throw new ModelNotFoundException("User with id " + userId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByUser(userId).stream().map(
-                score -> getHighScoreEntityModel(score, authentication.getName(), authentication)
+                score -> getHighScoreEntityModel(score, finalAuthentication.getName(), finalAuthentication)
         ).toList();
         if(highScores.isEmpty()){
             return ResponseEntity.notFound().build();
@@ -82,11 +89,12 @@ public class HighScoreApiController {
     }
     @GetMapping("/search/games/{gameId}/top10")
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getTop10HighScoresForGame(@PathVariable Long gameId, Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         if(gameService.getGame(gameId).isEmpty()){
             throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getTop10HighScoresByGame(gameId).stream().map(
-                score -> getHighScoreEntityModel(score, authentication.getName(), authentication)
+                score -> getHighScoreEntityModel(score, finalAuthentication.getName(), finalAuthentication)
         ).toList();
         if(highScores.isEmpty()){
             return ResponseEntity.notFound().build();
@@ -95,11 +103,12 @@ public class HighScoreApiController {
     }
     @GetMapping("/search/games/{gameId}/top10today")
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getTop10HighScoresForGameToday(@PathVariable Long gameId, Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         if(gameService.getGame(gameId).isEmpty()){
             throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresToday(gameId, LocalDate.now()).stream().map(
-                score -> getHighScoreEntityModel(score, authentication.getName(), authentication)
+                score -> getHighScoreEntityModel(score, finalAuthentication.getName(), finalAuthentication)
         ).toList();
         if(highScores.isEmpty()){
             return ResponseEntity.notFound().build();
@@ -108,6 +117,7 @@ public class HighScoreApiController {
     }
     @GetMapping("/search/games/{gameId}/users/{userId}")
     public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByUserIdForGame(@PathVariable Long gameId, @PathVariable Long userId, Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         if(gameService.getGame(gameId).isEmpty()){
             throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
@@ -115,7 +125,7 @@ public class HighScoreApiController {
             throw new ModelNotFoundException("User with id " + userId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByGameAndUser(userId, gameId).stream().map(
-                score -> getHighScoreEntityModel(score, authentication.getName(), authentication)
+                score -> getHighScoreEntityModel(score, finalAuthentication.getName(), finalAuthentication)
         ).toList();
         if(highScores.isEmpty()){
             return ResponseEntity.notFound().build();
@@ -125,6 +135,9 @@ public class HighScoreApiController {
 
     @PostMapping("/new")
     public ResponseEntity<EntityModel<HighScoreModel>> createHighScore(@RequestBody HighScoreModel highScoreModel, Authentication authentication){
+        if(authentication == null){
+            throw new InvalidUserException("Please login to save a new high score");
+        }
         highScoreService.validateNewHighScore(highScoreModel);
         HighScoreModel newHighScore = highScoreService.createHighScore(highScoreModel);
         URI location = URI.create("/api/scores/search/" + newHighScore.getScoreId());
@@ -132,7 +145,10 @@ public class HighScoreApiController {
         return ResponseEntity.created(location).body(EntityModel.of(newHighScore).add(selfLink));
     }
     @PutMapping("/update/{scoreId}")
-    public ResponseEntity<EntityModel<HighScoreModel>> updateHighScore(@PathVariable Long scoreId, @RequestBody HighScoreModel highScoreModel){
+    public ResponseEntity<EntityModel<HighScoreModel>> updateHighScore(@PathVariable Long scoreId, @RequestBody HighScoreModel highScoreModel, Authentication authentication){
+        if(authentication == null){
+            throw new GenericUnauthorizedException("Please login as admin to update this score");
+        }
         if(highScoreService.getHighScore(scoreId).isEmpty()){
             return ResponseEntity.notFound().build();
         }
@@ -145,7 +161,10 @@ public class HighScoreApiController {
     }
 
     @DeleteMapping("/delete/{scoreId}")
-    public ResponseEntity<EntityModel<HighScoreModel>> deleteHighScore(@PathVariable Long scoreId){
+    public ResponseEntity<EntityModel<HighScoreModel>> deleteHighScore(@PathVariable Long scoreId, Authentication authentication){
+        if(authentication == null){
+            throw new GenericUnauthorizedException("Please login as admin or user: " + scoreId + " to delete this score");
+        }
         if(highScoreService.getHighScore(scoreId).isEmpty()){
             return ResponseEntity.notFound().build();
         }

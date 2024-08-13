@@ -1,8 +1,10 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
 import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentOwner;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FavouriteGameModel;
+import com.sparta.cr.carnasagameswebsiteandapi.security.jwt.AnonymousAuthentication;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.FavouriteGameServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.GameServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
@@ -36,10 +38,11 @@ public class FavouriteGameApiController {
     @GetMapping("/search/id/{userId}/top-10-games")
     public ResponseEntity<CollectionModel<EntityModel<FavouriteGameModel>>> getTopTenGamesPlayed(@PathVariable Long userId,
                                                                                                  Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         List<EntityModel<FavouriteGameModel>> favouriteGameModels = favouriteGameService
                 .getTopTenFavouriteGamesByUserId(userId)
                 .stream()
-                .map(game -> getFavouriteGameEntityModel(game, authentication.getName(), authentication))
+                .map(game -> getFavouriteGameEntityModel(game, finalAuthentication.getName(), finalAuthentication))
                 .toList();
         return ResponseEntity.ok(CollectionModel.of(favouriteGameModels));
     }
@@ -47,10 +50,11 @@ public class FavouriteGameApiController {
     @GetMapping("/search/id/{userId}/favourite-games")
     public ResponseEntity<CollectionModel<EntityModel<FavouriteGameModel>>> getFavouriteGames(@PathVariable Long userId,
                                                                                               Authentication authentication){
+        Authentication finalAuthentication = AnonymousAuthentication.ensureAuthentication(authentication);
         List<EntityModel<FavouriteGameModel>> favouriteGameModels = favouriteGameService
                 .getAllFavouriteGamesByUserId(userId)
                 .stream()
-                .map(game -> getFavouriteGameEntityModel(game, authentication.getName(), authentication))
+                .map(game -> getFavouriteGameEntityModel(game, finalAuthentication.getName(), finalAuthentication))
                 .toList();
         return ResponseEntity.ok(CollectionModel.of(favouriteGameModels));
     }
@@ -58,13 +62,19 @@ public class FavouriteGameApiController {
     @PostMapping("/new/favourite-game")
     public ResponseEntity<EntityModel<FavouriteGameModel>> createFavouriteGame(@RequestBody FavouriteGameModel model,
                                                                                Authentication authentication){
+        if(authentication == null){
+            throw new GenericUnauthorizedException("please log in first to create a new favourite game"); //change so that anonymous users can still play game? not sure if this will stop that.
+        }
         favouriteGameService.validateNewFavouriteGame(model);
         favouriteGameService.createFavouriteGame(model);
         return new ResponseEntity<>(getFavouriteGameEntityModel(model, authentication.getName(), authentication), HttpStatus.CREATED);
     }
 
     @PutMapping("/update/favourite-game/{userId}/{gameId}")
-    public ResponseEntity<EntityModel<FavouriteGameModel>> updateFavouriteGame(@PathVariable Long userId, @PathVariable Long gameId, @RequestBody FavouriteGameModel model){
+    public ResponseEntity<EntityModel<FavouriteGameModel>> updateFavouriteGame(@PathVariable Long userId, @PathVariable Long gameId, @RequestBody FavouriteGameModel model, Authentication authentication){
+        if(authentication == null){
+            throw new GenericUnauthorizedException("please log in first to update favourite game");
+        }
         if(!model.getFavouriteGameModelId().getGameId().equals(gameId)){
             throw new InvalidGameException("Cannot update relationship as url gameId does not match gameId");
         }
@@ -77,7 +87,10 @@ public class FavouriteGameApiController {
     }
 
     @DeleteMapping("/delete/favourite-game/{userId}/{gameId}")
-    public ResponseEntity<FavouriteGameModel> deleteFavouriteGame(@PathVariable Long userId, @PathVariable Long gameId){
+    public ResponseEntity<FavouriteGameModel> deleteFavouriteGame(@PathVariable Long userId, @PathVariable Long gameId, Authentication authentication){
+        if(authentication == null){
+            throw new GenericUnauthorizedException("please log in first to delete favourite game");
+        }
         if(userService.getUser(userId).isEmpty()||gameService.getGame(gameId).isEmpty()){
             return ResponseEntity.notFound().build();
         }
