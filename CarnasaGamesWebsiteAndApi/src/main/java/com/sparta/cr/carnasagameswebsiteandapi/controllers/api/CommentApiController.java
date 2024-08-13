@@ -149,7 +149,7 @@ public class CommentApiController {
 
     private Link getUserLink(CommentModel commentModel, String currentUser, Authentication authentication){
         if(isUserAccountPrivateAndHidden(commentModel,currentUser,authentication)){
-            return Link.of("").withRel("Private user");
+            return Link.of("/").withRel("Private user");
         }
         else {
             return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder

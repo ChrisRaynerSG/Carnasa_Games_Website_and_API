@@ -163,7 +163,7 @@ public class HighScoreApiController {
                             && authentication.getAuthorities().stream().noneMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"))
                             && !currentOwner.equals(userService.getUser(highScoreModel.getUserModel().getId()).get().getUsername())
             ){
-                        return null;
+                        return Link.of("/").withRel("Private user");
             }
             else{
                 return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class)

@@ -226,7 +226,7 @@ public class GameApiController {
 
     private Link getGameCreator(GameModel gameModel, String currentOwner, Authentication authentication){
         if(isUserFromGamePrivateAndNotVisible(authentication,currentOwner,gameModel)){
-            return Link.of("").withRel("Creator is private");
+            return Link.of("/").withRel("Creator is private");
         }
         else {
             return WebMvcLinkBuilder.linkTo(methodOn(UserApiController.class).getUserById(gameModel.getCreator().getId(), currentOwner, authentication)).withRel("Creator: " + gameModel.getCreator().getUsername());

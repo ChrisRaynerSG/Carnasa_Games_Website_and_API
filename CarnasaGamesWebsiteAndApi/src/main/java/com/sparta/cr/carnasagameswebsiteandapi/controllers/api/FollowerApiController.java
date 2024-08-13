@@ -77,7 +77,7 @@ public class FollowerApiController {
 
     private Link getUserLink(FollowerModel followerModel, String currentUser, Authentication authentication) {
         if(isUserPrivateAndNotVisible(authentication, currentUser, followerModel)){
-            return Link.of("").withRel("Private user");
+            return Link.of("/").withRel("Private user");
         }
         else {
             return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getUser().getId(), currentUser, authentication)).withRel("Following: " + followerModel.getUser().getUsername());
@@ -85,7 +85,7 @@ public class FollowerApiController {
     }
     private Link getFollowerLink(FollowerModel followerModel, String currentUser, Authentication authentication) {
         if(isFollowerPrivateAndNotVisible(authentication, currentUser, followerModel)){
-            return Link.of("").withRel("Private user");
+            return Link.of("/").withRel("Private user");
         }
         else {
             return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getFollower().getId(), currentUser, authentication)).withRel("Follower: " + followerModel.getFollower().getUsername());
