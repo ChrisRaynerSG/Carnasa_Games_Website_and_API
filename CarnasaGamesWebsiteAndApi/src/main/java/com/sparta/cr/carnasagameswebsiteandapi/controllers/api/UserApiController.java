@@ -106,6 +106,7 @@ public class UserApiController {
                                                              @RequestBody UserModel userModel,
                                                              @CurrentOwner String username,
                                                              @CurrentRole Collection<? extends GrantedAuthority> roles) {
+
         if(userService.getUser(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
         }
