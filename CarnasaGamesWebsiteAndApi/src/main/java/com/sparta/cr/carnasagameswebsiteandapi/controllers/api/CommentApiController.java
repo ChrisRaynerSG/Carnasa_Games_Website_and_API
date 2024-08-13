@@ -1,6 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
 import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentOwner;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.CommentModel;
@@ -51,20 +52,22 @@ public class CommentApiController {
     @GetMapping("/search/{commentId}")
     public ResponseEntity<EntityModel<CommentModel>> getCommentById(@PathVariable Long commentId,
                                                                     Authentication authentication) {
+        Authentication finalAuthentication = anonymousAuthentication(authentication);
         if(commentService.getComment(commentId).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         CommentModel commentModel = commentService.getComment(commentId).get();
-        return ResponseEntity.ok(getCommentEntityModel(commentModel, authentication.getName(), authentication));
+        return ResponseEntity.ok(getCommentEntityModel(commentModel, finalAuthentication.getName(), finalAuthentication));
     }
     @GetMapping("/search/game/{gameId}")
     public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByGame(@PathVariable Long gameId,
                                                                                            Authentication authentication) {
+        Authentication finalAuthentication = anonymousAuthentication(authentication);
         if(gameService.getGame(gameId).isEmpty()) {
             throw new ModelNotFoundException("Game with ID: " + gameId + " not found");
         }
        List<EntityModel<CommentModel>> comments = commentService.getCommentsByGame(gameId).stream().map(
-               comment -> getCommentEntityModel(comment, authentication.getName(), authentication)
+               comment -> getCommentEntityModel(comment, finalAuthentication.getName(), finalAuthentication)
        ).toList();
        if(comments.isEmpty()) {
            return ResponseEntity.notFound().build();
@@ -74,11 +77,12 @@ public class CommentApiController {
     @GetMapping("/search/user/{userId}")
     public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByUser(@PathVariable Long userId,
                                                                                            Authentication authentication) {
+        Authentication finalAuthentication = anonymousAuthentication(authentication);
         if(userService.getUser(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
         }
         List<EntityModel<CommentModel>> comments = commentService.getCommentsByUser(userId).stream().map(
-                comment -> getCommentEntityModel(comment, authentication.getName(), authentication)).toList();
+                comment -> getCommentEntityModel(comment, finalAuthentication.getName(), finalAuthentication)).toList();
         if(comments.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -86,9 +90,10 @@ public class CommentApiController {
     }
     @GetMapping("/search/date/today")
     public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByDateToday(Authentication authentication) {
+        Authentication finalAuthentication = anonymousAuthentication(authentication);
         LocalDate today = LocalDate.now();
         List<EntityModel<CommentModel>> comments = commentService.getCommentsFromToday(today).stream().map(
-                comment -> getCommentEntityModel(comment, authentication.getName(), authentication)).toList();
+                comment -> getCommentEntityModel(comment, finalAuthentication.getName(), finalAuthentication)).toList();
         if(comments.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -98,9 +103,9 @@ public class CommentApiController {
     public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByDate(@PathVariable String date1,
                                                                                            @PathVariable String date2,
                                                                                            Authentication authentication) {
-
+        Authentication finalAuthentication = anonymousAuthentication(authentication);
         List<EntityModel<CommentModel>> comments = commentService.getCommentsByDate(date1, date2).stream().map(
-                comment -> getCommentEntityModel(comment, authentication.getName(), authentication)).toList();
+                comment -> getCommentEntityModel(comment, finalAuthentication.getName(), finalAuthentication)).toList();
         if(comments.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -110,6 +115,9 @@ public class CommentApiController {
     @PostMapping("/new")
     public ResponseEntity<EntityModel<CommentModel>> createComment(@RequestBody CommentModel commentModel,
                                                                    Authentication authentication) {
+        if(authentication == null){
+            throw new InvalidUserException("Please login first");
+        }
         if(!commentService.validateNewComment(commentModel)){
             return ResponseEntity.badRequest().build();
         }
@@ -120,6 +128,9 @@ public class CommentApiController {
     }
     @PutMapping("/update/{commentId}")
     public ResponseEntity updateComment(@PathVariable Long commentId, @RequestBody CommentModel commentModel, Authentication authentication) {
+        if(authentication == null){
+            throw new InvalidUserException("Please login first");
+        }
         if(commentService.getComment(commentId).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -136,6 +147,9 @@ public class CommentApiController {
     @DeleteMapping("/delete/{commentId}")
     public ResponseEntity deleteComment(@PathVariable Long commentId,
                                         Authentication authentication) {
+        if(authentication == null){
+            throw new InvalidUserException("Please login first");
+        }
         if(commentService.getComment(commentId).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
