@@ -52,10 +52,10 @@ public class UserApiController {
                                                                              @RequestParam(name = "size", defaultValue = "10") int size,
                                                                              Authentication authentication) {
 
-        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
-
-        if(isAdmin) {
-            List<EntityModel<UserDto>> allUsers = userService.getAllUsers(page,size).stream().map(this::getUserEntityModel).toList();
+        if(isRoleAdmin(authentication)) {
+            List<EntityModel<UserDto>> allUsers = userService.getAllUsers(page,size).stream().map(
+                    user -> getUserEntityModel(user, "Admin", authentication)
+            ).toList();
             return new ResponseEntity<>(CollectionModel.of(allUsers,WebMvcLinkBuilder
                     .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getAllUsers(page,size, authentication))
                     .withSelfRel()), HttpStatus.OK);
@@ -67,19 +67,23 @@ public class UserApiController {
     }
 
     @GetMapping("/search/id/{userId}")
-    public ResponseEntity<EntityModel<UserDto>> getUserById(@PathVariable Long userId) {
+    public ResponseEntity<EntityModel<UserDto>> getUserById(@PathVariable Long userId, @CurrentOwner String username, Authentication authentication) {
 
         // if user private hide unless user OR admin
-
         if(userService.getUser(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
         }
-        UserModel userModel = userService.getUser(userId).get();
-        return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
+        if(isAccountVisible(userId, username, authentication)) {
+            UserModel userModel = userService.getUser(userId).get();
+            return new ResponseEntity<>(getUserEntityModel(userModel, username, authentication),HttpStatus.OK);
+        }
+        else{
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
     }
 
     @GetMapping("/search/name/{username}")
-    public ResponseEntity<EntityModel<UserDto>> getUserByName(@PathVariable String username) {
+    public ResponseEntity<EntityModel<UserDto>> getUserByName(@PathVariable String username, @CurrentOwner String ownerName, Authentication authentication ) {
 
         // if user private hide unless user OR admin
 
@@ -87,17 +91,17 @@ public class UserApiController {
             throw new UsernameNotFoundException(username);
         }
         UserModel userModel = userService.getUserByUsername(username).get();
-        return new ResponseEntity<>(getUserEntityModel(userModel),HttpStatus.OK);
+        return new ResponseEntity<>(getUserEntityModel(userModel, ownerName, authentication),HttpStatus.OK);
     }
 
     @PostMapping("/new")
-    public ResponseEntity<EntityModel<UserDto>> createUser(@RequestBody UserModel userModel) {
+    public ResponseEntity<EntityModel<UserDto>> createUser(@RequestBody UserModel userModel, Authentication authentication) {
         if(!userService.validateNewUser(userModel)){
             return ResponseEntity.badRequest().build();
         }
         UserModel newUser = userService.createUser(userModel);
         URI location = URI.create("/api/users/search/id/"+newUser.getId());
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(newUser.getId())).withSelfRel();
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(newUser.getId(),userModel.getUsername(), authentication)).withSelfRel();
         return ResponseEntity.created(location).body(EntityModel.of(userService.convertUserToDto(newUser)).add(selfLink));
     }
 
@@ -105,7 +109,7 @@ public class UserApiController {
     public ResponseEntity<EntityModel<UserModel>> updateUser(@PathVariable Long userId,
                                                              @RequestBody UserModel userModel,
                                                              @CurrentOwner String username,
-                                                             @CurrentRole Collection<? extends GrantedAuthority> roles) {
+                                                             Authentication authentication) {
 
         if(userService.getUser(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
@@ -113,19 +117,27 @@ public class UserApiController {
         if(!userModel.getId().equals(userId)) {
             return ResponseEntity.badRequest().build();
         }
-
-        userService.validateExistingUserUpdate(userModel);
-        userService.updateUser(userModel);
-        return ResponseEntity.noContent().build();
+        if(isRoleAdmin(authentication) ||username.equals(userService.getUser(userId).get().getUsername())){
+            userService.validateExistingUserUpdate(userModel);
+            userService.updateUser(userModel);
+            return ResponseEntity.noContent().build();
+        }
+        else throw new ForbiddenRoleException();
     }
 
     @DeleteMapping("/delete/{userId}")
-    public ResponseEntity<EntityModel<UserModel>> deleteUser(@PathVariable Long userId) {
+    public ResponseEntity<EntityModel<UserModel>> deleteUser(@PathVariable Long userId, @CurrentOwner String username, Authentication authentication) {
+
         if(userService.getUser(userId).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        userService.deleteUser(userId);
-        return ResponseEntity.noContent().build();
+        else {
+            if(isRoleAdmin(authentication)||username.equals(userService.getUser(userId).get().getUsername())) {
+                userService.deleteUser(userId);
+                return ResponseEntity.noContent().build();
+            }
+            throw new ForbiddenRoleException();
+        }
     }
 
     private List<Link> getCommentsLinks(UserModel user) {
@@ -160,21 +172,21 @@ public class UserApiController {
                 .toList();
     }
 
-    private List<Link> getFollowersLinks(UserModel user) {
+    private List<Link> getFollowersLinks(UserModel user, String currentOwner, Authentication authentication) {
         return followerService.getAllFollowersByUserId(user.getId())
                 .stream()
                 .map(follower ->
                         WebMvcLinkBuilder
-                                .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(follower.getFollower().getId())).withRel(
+                                .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(follower.getFollower().getId(), currentOwner, authentication)).withRel(
                                         "Follower: " + follower.getFollower().getUsername())
                                 ).toList();
     }
-    private List<Link> getFollowingLinks(UserModel user) {
+    private List<Link> getFollowingLinks(UserModel user, String currentOwner, Authentication authentication) {
         return followerService.getAllFollowingByUserId(user.getId())
                 .stream()
                 .map(follower ->
                         WebMvcLinkBuilder
-                                .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(follower.getUser().getId())).withRel(
+                                .linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(follower.getUser().getId(), currentOwner, authentication)).withRel(
                                         "Following: " + follower.getUser().getUsername())
                 ).toList();
     }
@@ -186,14 +198,22 @@ public class UserApiController {
                 ).toList();
     }
 
-    private EntityModel<UserDto> getUserEntityModel(UserModel userModel) {
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userModel.getId())).withSelfRel();
+    private EntityModel<UserDto> getUserEntityModel(UserModel userModel, String currentOwner, Authentication authentication) {
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userModel.getId(), currentOwner, authentication)).withSelfRel();
         return EntityModel.of(userService.convertUserToDto(userModel), selfLink)
                 .add(getCommentsLinks(userModel))
                 .add(getGamesLinks(userModel))
                 .add(getFavouriteGamesLinks(userModel))
                 .add(getScoresLinks(userModel))
-                .add(getFollowersLinks(userModel))
-                .add(getFollowingLinks(userModel));
+                .add(getFollowersLinks(userModel, currentOwner, authentication))
+                .add(getFollowingLinks(userModel, currentOwner, authentication));
+    }
+
+    private boolean isRoleAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    private boolean isAccountVisible(Long userId, String username, Authentication authentication) {
+        return (userService.getUser(userId).get().isPrivate() && (isRoleAdmin(authentication) || username.equals(userService.getUser(userId).get().getUsername()))) || !userService.getUser(userId).get().isPrivate();
     }
 }
