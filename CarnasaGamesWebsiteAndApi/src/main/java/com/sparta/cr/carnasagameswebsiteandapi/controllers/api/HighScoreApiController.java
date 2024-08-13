@@ -172,13 +172,13 @@ public class HighScoreApiController {
             }
         }
     }
-    private Link getGameLink(HighScoreModel highScoreModel){
+    private Link getGameLink(HighScoreModel highScoreModel, String currentUser, Authentication authentication){
         //update with if published at some point
-        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(highScoreModel.getGamesModel().getId())).withRel("Game: " + highScoreModel.getGamesModel().getTitle());
+        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(highScoreModel.getGamesModel().getId(), currentUser, authentication)).withRel("Game: " + highScoreModel.getGamesModel().getTitle());
     }
 
     private EntityModel<HighScoreModel> getHighScoreEntityModel(HighScoreModel highScoreModel, String currentOwner, Authentication authentication){
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getScoreById(highScoreModel.getScoreId(),currentOwner,authentication)).withSelfRel();
-        return EntityModel.of(highScoreModel, getUserLink(highScoreModel, currentOwner, authentication), getGameLink(highScoreModel), selfLink);
+        return EntityModel.of(highScoreModel, getUserLink(highScoreModel, currentOwner, authentication), getGameLink(highScoreModel, currentOwner,authentication), selfLink);
     }
 }

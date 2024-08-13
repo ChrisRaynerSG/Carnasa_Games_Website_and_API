@@ -1,5 +1,6 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
+import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentOwner;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FavouriteGameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.FavouriteGameServiceImpl;
@@ -12,6 +13,7 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,30 +34,36 @@ public class FavouriteGameApiController {
     }
 
     @GetMapping("/search/id/{userId}/top-10-games")
-    public ResponseEntity<CollectionModel<EntityModel<FavouriteGameModel>>> getTopTenGamesPlayed(@PathVariable Long userId){
+    public ResponseEntity<CollectionModel<EntityModel<FavouriteGameModel>>> getTopTenGamesPlayed(@PathVariable Long userId,
+                                                                                                 @CurrentOwner String username,
+                                                                                                 Authentication authentication){
         List<EntityModel<FavouriteGameModel>> favouriteGameModels = favouriteGameService
                 .getTopTenFavouriteGamesByUserId(userId)
                 .stream()
-                .map( this::getFavouriteGameEntityModel)
+                .map(game -> getFavouriteGameEntityModel(game, username, authentication))
                 .toList();
         return ResponseEntity.ok(CollectionModel.of(favouriteGameModels));
     }
 
     @GetMapping("/search/id/{userId}/favourite-games")
-    public ResponseEntity<CollectionModel<EntityModel<FavouriteGameModel>>> getFavouriteGames(@PathVariable Long userId){
+    public ResponseEntity<CollectionModel<EntityModel<FavouriteGameModel>>> getFavouriteGames(@PathVariable Long userId,
+                                                                                              @CurrentOwner String username,
+                                                                                              Authentication authentication){
         List<EntityModel<FavouriteGameModel>> favouriteGameModels = favouriteGameService
                 .getAllFavouriteGamesByUserId(userId)
                 .stream()
-                .map( this::getFavouriteGameEntityModel)
+                .map(game -> getFavouriteGameEntityModel(game, username, authentication))
                 .toList();
         return ResponseEntity.ok(CollectionModel.of(favouriteGameModels));
     }
 
     @PostMapping("/new/favourite-game")
-    public ResponseEntity<EntityModel<FavouriteGameModel>> createFavouriteGame(@RequestBody FavouriteGameModel model){
+    public ResponseEntity<EntityModel<FavouriteGameModel>> createFavouriteGame(@RequestBody FavouriteGameModel model,
+                                                                               @CurrentOwner String username,
+                                                                               Authentication authentication){
         favouriteGameService.validateNewFavouriteGame(model);
         favouriteGameService.createFavouriteGame(model);
-        return new ResponseEntity<>(getFavouriteGameEntityModel(model), HttpStatus.CREATED);
+        return new ResponseEntity<>(getFavouriteGameEntityModel(model,username,authentication), HttpStatus.CREATED);
     }
 
     @PutMapping("/update/favourite-game/{userId}/{gameId}")
@@ -82,14 +90,14 @@ public class FavouriteGameApiController {
         }
     }
 
-    public Link getGameLink(FavouriteGameModel model){
+    public Link getGameLink(FavouriteGameModel model, String currentUser, Authentication authentication){
         return gameService.getGame(model.getGameModel().getId()).map(game ->
                 WebMvcLinkBuilder
-                        .linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(game.getId()))
+                        .linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(game.getId(), currentUser, authentication))
                         .withRel("Game: " + game.getTitle())).get();
     }
 
-    private EntityModel<FavouriteGameModel> getFavouriteGameEntityModel(FavouriteGameModel model){
-        return EntityModel.of(model, getGameLink(model));
+    private EntityModel<FavouriteGameModel> getFavouriteGameEntityModel(FavouriteGameModel model, String currentUser, Authentication authentication){
+        return EntityModel.of(model, getGameLink(model, currentUser, authentication));
     }
 }

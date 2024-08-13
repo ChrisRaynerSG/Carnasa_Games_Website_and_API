@@ -140,34 +140,34 @@ public class UserApiController {
         }
     }
 
-    private List<Link> getCommentsLinks(UserModel user) {
+    private List<Link> getCommentsLinks(UserModel user, String currentOwner, Authentication authentication) {
         return commentService
                 .getCommentsByUser(user.getId())
                 .stream()
                 .map(comment ->
                         WebMvcLinkBuilder
-                        .linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getCommentById(comment.getId()))
+                        .linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getCommentById(comment.getId(), currentOwner, authentication))
                         .withRel("Comment: " + comment.getCommentText()))
                 .toList();
     }
 
-    private List<Link> getGamesLinks(UserModel user) {
+    private List<Link> getGamesLinks(UserModel user, String currentOwner, Authentication authentication) {
         return gameService
                 .getGamesByCreatorId(user.getId(),0,10)
                 .stream()
                 .map(game ->
                         WebMvcLinkBuilder
-                                .linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(game.getId()))
+                                .linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(game.getId(), currentOwner, authentication))
                                 .withRel("Game: " + game.getTitle()))
                 .toList();
     }
 
-    private List<Link> getScoresLinks(UserModel user) {
+    private List<Link> getScoresLinks(UserModel user, String currentOwner, Authentication authentication) {
         return highScoreService.getHighScoresByUser(user.getId())
                 .stream()
                 .map(score ->
                         WebMvcLinkBuilder
-                                .linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(score.getGamesModel().getId()))
+                                .linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(score.getGamesModel().getId(), currentOwner, authentication))
                                 .withRel("Score: " + score.getScore() + " Game: " + score.getGamesModel().getTitle()))
                 .toList();
     }
@@ -190,10 +190,10 @@ public class UserApiController {
                                         "Following: " + follower.getUser().getUsername())
                 ).toList();
     }
-    private List<Link> getFavouriteGamesLinks(UserModel user) {
+    private List<Link> getFavouriteGamesLinks(UserModel user, String currentOwner, Authentication authentication) {
         return favouriteGameService.getAllFavouriteGamesByUserId(user.getId())
                 .stream()
-                .map(fav -> WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(fav.getGameModel().getId())).withRel(
+                .map(fav -> WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(fav.getGameModel().getId(), currentOwner, authentication)).withRel(
                         "Favourited Game: " + fav.getGameModel().getTitle())
                 ).toList();
     }
@@ -201,10 +201,10 @@ public class UserApiController {
     private EntityModel<UserDto> getUserEntityModel(UserModel userModel, String currentOwner, Authentication authentication) {
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userModel.getId(), currentOwner, authentication)).withSelfRel();
         return EntityModel.of(userService.convertUserToDto(userModel), selfLink)
-                .add(getCommentsLinks(userModel))
-                .add(getGamesLinks(userModel))
-                .add(getFavouriteGamesLinks(userModel))
-                .add(getScoresLinks(userModel))
+                .add(getCommentsLinks(userModel, currentOwner, authentication))
+                .add(getGamesLinks(userModel, currentOwner, authentication))
+                .add(getFavouriteGamesLinks(userModel, currentOwner, authentication))
+                .add(getScoresLinks(userModel, currentOwner, authentication))
                 .add(getFollowersLinks(userModel, currentOwner, authentication))
                 .add(getFollowingLinks(userModel, currentOwner, authentication));
     }

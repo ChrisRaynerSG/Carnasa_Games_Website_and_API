@@ -262,18 +262,19 @@ public class GameApiController {
                 && !userService.getUser(game.getCreator().getId()).get().getUsername().equals(currentUser);
     }
 
-    private List<Link> getGameComments(GameModel gameModel){
+    private List<Link> getGameComments(GameModel gameModel, String currentUser, Authentication authentication){
+        //update to hide username with private account
         return commentService.getCommentsByGame(gameModel.getId())
                 .stream().map(comment ->
                         WebMvcLinkBuilder
-                                .linkTo(methodOn(CommentApiController.class).getCommentById(comment.getId()))
+                                .linkTo(methodOn(CommentApiController.class).getCommentById(comment.getId(), currentUser, authentication))
                                 .withRel("User: " + comment.getUserModel().getUsername() + " Comment: " +comment.getCommentText()))
                 .toList();
     }
 
     private EntityModel<GameModel> getGameEntityModel(GameModel gameModel, String currentUser, Authentication authentication){
         Link selfLink = WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getGameById(gameModel.getId(),currentUser,authentication)).withSelfRel();
-        return EntityModel.of(gameModel, selfLink, getGameCreator(gameModel, currentUser, authentication)).add(getGameScores(gameModel, currentUser, authentication)).add(getGameComments(gameModel));
+        return EntityModel.of(gameModel, selfLink, getGameCreator(gameModel, currentUser, authentication)).add(getGameScores(gameModel, currentUser, authentication)).add(getGameComments(gameModel, currentUser, authentication));
 
     }
 }
