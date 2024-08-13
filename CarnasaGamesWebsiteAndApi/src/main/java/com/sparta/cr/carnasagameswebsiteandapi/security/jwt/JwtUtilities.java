@@ -20,11 +20,6 @@ public class JwtUtilities {
 
     public static final long JWT_TOKEN_VALIDITY = 5*60*60*1000;
     private final SecretKey secret = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    private final JwtDecoder jwtDecoder;
-
-    public JwtUtilities(@Qualifier("jwtDecoder") JwtDecoder jwtDecoder) {
-        this.jwtDecoder = jwtDecoder;
-    }
 
     public String extractUsername(String token){
         return getClaimFromToken(token, Claims::getSubject);

@@ -15,6 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -23,10 +26,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -46,6 +46,8 @@ public class UserServiceTest {
     private UserModel user1;
     private UserModel user2;
     private List<UserModel> users;
+    private Page<UserModel> page;
+    private List<UserModel> usersByPage;
 
     @InjectMocks
     private UserServiceImpl userServiceImpl;
@@ -58,7 +60,7 @@ public class UserServiceTest {
         user1.setUsername("admin");
         user1.setPassword(passwordEncoderTest.encode("Password@1"));
         user1.setEmail("admin@admin.com");
-        user1.setRoles("ROLE_ADMIN");
+        user1.setRoles(Set.of("ROLE_ADMIN"));
         user1.setProfileImage("profileImage");
         user1.setPrivate(false);
 
@@ -67,11 +69,12 @@ public class UserServiceTest {
         user2.setUsername("user");
         user2.setPassword(passwordEncoderTest.encode("Password@1"));
         user2.setEmail("user@user.com");
-        user2.setRoles("ROLE_USER");
+        user2.setRoles(Set.of("ROLE_USER"));
 
         users = new ArrayList<>();
         users.add(user1);
         users.add(user2);
+        usersByPage = new ArrayList<>();
 
     }
 
@@ -193,7 +196,7 @@ public class UserServiceTest {
         user.setUsername("admin");
         user.setPassword("Password@1");
         user.setEmail("admin@admin");
-        user.setRoles("ROLE_ADMIN");
+        user.setRoles(Set.of("ROLE_ADMIN"));
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user1));
         assertThrows(InvalidEmailException.class, () -> userServiceImpl.updateUser(user));
     }
@@ -204,7 +207,7 @@ public class UserServiceTest {
         user.setUsername("admin");
         user.setPassword("Password@1");
         user.setEmail("admin@admin.com");
-        user.setRoles("ROLE_PENGUIN");
+        user.setRoles(Set.of("ROLE_PENGUIN"));
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user1));
         assertThrows(InvalidRoleException.class, () -> userServiceImpl.updateUser(user));
     }
@@ -215,7 +218,7 @@ public class UserServiceTest {
         user.setUsername("admin");
         user.setPassword("Password@2");
         user.setEmail("admin@admin.com");
-        user.setRoles("ROLE_ADMIN");
+        user.setRoles(Set.of("ROLE_ADMIN"));
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user1));
         when(passwordEncoder.encode(any(String.class))).thenReturn(passwordEncoderTest.encode(user.getPassword()));
         when(userRepository.save(any(UserModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -246,16 +249,19 @@ public class UserServiceTest {
     }
     @Test
     void getUsersByNameReturnsUsersWithName(){
+        usersByPage.add(user1);
+        page = new PageImpl<>(usersByPage);
         int expected = 1;
-        when(userRepository.findAll()).thenReturn(users);
-        int actual = userServiceImpl.getUsersByName("adm").size();
+        when(userRepository.findByUsernameContainingIgnoreCase(eq("adm"),any(Pageable.class))).thenReturn(page);
+        int actual = userServiceImpl.getUsersByName("adm",0,10).toList().size();
         Assertions.assertEquals(expected, actual);
     }
     @Test
     void getUsersByNameReturnsEmptyListIfNoUsersFound(){
+        page = new PageImpl<>(usersByPage);
         int expected = 0;
-        when(userRepository.findAll()).thenReturn(users);
-        int actual = userServiceImpl.getUsersByName("jerry").size();
+        when(userRepository.findByUsernameContainingIgnoreCase(eq("jerry"),any(Pageable.class))).thenReturn(page);
+        int actual = userServiceImpl.getUsersByName("jerry",0,10).toList().size();
         Assertions.assertEquals(expected, actual);
     }
     @Test

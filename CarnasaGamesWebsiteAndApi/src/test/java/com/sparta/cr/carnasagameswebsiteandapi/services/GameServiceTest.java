@@ -58,7 +58,6 @@ public class GameServiceTest {
     private GenreModel genreModel1;
     private GenreModel genreModel2;
     private Page<GameModel> page;
-    private Pageable pageable;
 
     @BeforeEach
     void setUp() {
