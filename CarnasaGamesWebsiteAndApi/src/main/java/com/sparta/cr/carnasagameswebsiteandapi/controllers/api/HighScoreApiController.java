@@ -36,44 +36,44 @@ public class HighScoreApiController {
     }
 
     @GetMapping("/search/all")
-    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getAllHighScores(@CurrentOwner String currentOwner, Authentication authentication){
+    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getAllHighScores(Authentication authentication){
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getAllHighScores().stream().map(
-        score -> getHighScoreEntityModel(score, currentOwner, authentication)).toList();
+        score -> getHighScoreEntityModel(score, authentication.getName(), authentication)).toList();
         return new ResponseEntity<>(CollectionModel.of(highScores).add(
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores(currentOwner,authentication)).withSelfRel()
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores(authentication)).withSelfRel()
         ), HttpStatus.OK);
     }
 
     @GetMapping("/search/{scoreId}")
-    public ResponseEntity<EntityModel<HighScoreModel>> getScoreById(@PathVariable Long scoreId, @CurrentOwner String currentOwner, Authentication authentication){
+    public ResponseEntity<EntityModel<HighScoreModel>> getScoreById(@PathVariable Long scoreId, Authentication authentication){
         if(highScoreService.getHighScore(scoreId).isEmpty()){
             return ResponseEntity.notFound().build();
         }
         HighScoreModel highScoreModel = highScoreService.getHighScore(scoreId).get();
-        return ResponseEntity.ok(getHighScoreEntityModel(highScoreModel, currentOwner, authentication).add(
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores(currentOwner,authentication)).withRel("All Scores")
+        return ResponseEntity.ok(getHighScoreEntityModel(highScoreModel, authentication.getName(), authentication).add(
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores(authentication)).withRel("All Scores")
         ));
     }
 
     @GetMapping("/search/games/{gameId}")
-    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByGameId(@PathVariable Long gameId, @CurrentOwner String currentOwner, Authentication authentication){
+    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByGameId(@PathVariable Long gameId, Authentication authentication){
         if(gameService.getGame(gameId).isEmpty()){
             throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByGame(gameId).stream().map(
-                score -> getHighScoreEntityModel(score, currentOwner, authentication)).toList();
+                score -> getHighScoreEntityModel(score, authentication.getName(), authentication)).toList();
         if(highScores.isEmpty()){
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(CollectionModel.of(highScores));
     }
     @GetMapping("/search/users/{userId}")
-    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByUserId(@PathVariable Long userId, @CurrentOwner String currentOwner, Authentication authentication){
+    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByUserId(@PathVariable Long userId, Authentication authentication){
         if(userService.getUser(userId).isEmpty()){
             throw new ModelNotFoundException("User with id " + userId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByUser(userId).stream().map(
-                score -> getHighScoreEntityModel(score, currentOwner, authentication)
+                score -> getHighScoreEntityModel(score, authentication.getName(), authentication)
         ).toList();
         if(highScores.isEmpty()){
             return ResponseEntity.notFound().build();
@@ -81,12 +81,12 @@ public class HighScoreApiController {
         return ResponseEntity.ok(CollectionModel.of(highScores));
     }
     @GetMapping("/search/games/{gameId}/top10")
-    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getTop10HighScoresForGame(@PathVariable Long gameId, @CurrentOwner String currentOwner, Authentication authentication){
+    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getTop10HighScoresForGame(@PathVariable Long gameId, Authentication authentication){
         if(gameService.getGame(gameId).isEmpty()){
             throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getTop10HighScoresByGame(gameId).stream().map(
-                score -> getHighScoreEntityModel(score, currentOwner, authentication)
+                score -> getHighScoreEntityModel(score, authentication.getName(), authentication)
         ).toList();
         if(highScores.isEmpty()){
             return ResponseEntity.notFound().build();
@@ -94,12 +94,12 @@ public class HighScoreApiController {
         return ResponseEntity.ok(CollectionModel.of(highScores));
     }
     @GetMapping("/search/games/{gameId}/top10today")
-    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getTop10HighScoresForGameToday(@PathVariable Long gameId, @CurrentOwner String currentOwner, Authentication authentication){
+    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getTop10HighScoresForGameToday(@PathVariable Long gameId, Authentication authentication){
         if(gameService.getGame(gameId).isEmpty()){
             throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresToday(gameId, LocalDate.now()).stream().map(
-                score -> getHighScoreEntityModel(score, currentOwner, authentication)
+                score -> getHighScoreEntityModel(score, authentication.getName(), authentication)
         ).toList();
         if(highScores.isEmpty()){
             return ResponseEntity.notFound().build();
@@ -107,7 +107,7 @@ public class HighScoreApiController {
         return ResponseEntity.ok(CollectionModel.of(highScores));
     }
     @GetMapping("/search/games/{gameId}/users/{userId}")
-    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByUserIdForGame(@PathVariable Long gameId, @PathVariable Long userId, @CurrentOwner String currentOwner, Authentication authentication){
+    public ResponseEntity<CollectionModel<EntityModel<HighScoreModel>>> getHighScoresByUserIdForGame(@PathVariable Long gameId, @PathVariable Long userId, Authentication authentication){
         if(gameService.getGame(gameId).isEmpty()){
             throw new ModelNotFoundException("Game with id " + gameId + " does not exist");
         }
@@ -115,7 +115,7 @@ public class HighScoreApiController {
             throw new ModelNotFoundException("User with id " + userId + " does not exist");
         }
         List<EntityModel<HighScoreModel>> highScores = highScoreService.getHighScoresByGameAndUser(userId, gameId).stream().map(
-                score -> getHighScoreEntityModel(score, currentOwner, authentication)
+                score -> getHighScoreEntityModel(score, authentication.getName(), authentication)
         ).toList();
         if(highScores.isEmpty()){
             return ResponseEntity.notFound().build();
@@ -124,11 +124,11 @@ public class HighScoreApiController {
     }
 
     @PostMapping("/new")
-    public ResponseEntity<EntityModel<HighScoreModel>> createHighScore(@RequestBody HighScoreModel highScoreModel){
+    public ResponseEntity<EntityModel<HighScoreModel>> createHighScore(@RequestBody HighScoreModel highScoreModel, Authentication authentication){
         highScoreService.validateNewHighScore(highScoreModel);
         HighScoreModel newHighScore = highScoreService.createHighScore(highScoreModel);
         URI location = URI.create("/api/scores/search/" + newHighScore.getScoreId());
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores(null,null)).withSelfRel();
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getAllHighScores(authentication)).withSelfRel();
         return ResponseEntity.created(location).body(EntityModel.of(newHighScore).add(selfLink));
     }
     @PutMapping("/update/{scoreId}")
@@ -167,18 +167,17 @@ public class HighScoreApiController {
             }
             else{
                 return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class)
-                        .getUserById(highScoreModel.getUserModel().getId(),
-                                userService.getUser(highScoreModel.getUserModel().getId()).get().getUsername(), authentication)).withRel("User: " + highScoreModel.getUserModel().getUsername());
+                        .getUserById(highScoreModel.getUserModel().getId(), authentication)).withRel("User: " + highScoreModel.getUserModel().getUsername());
             }
         }
     }
-    private Link getGameLink(HighScoreModel highScoreModel, String currentUser, Authentication authentication){
+    private Link getGameLink(HighScoreModel highScoreModel, Authentication authentication){
         //update with if published at some point
-        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(highScoreModel.getGamesModel().getId(), currentUser, authentication)).withRel("Game: " + highScoreModel.getGamesModel().getTitle());
+        return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GameApiController.class).getGameById(highScoreModel.getGamesModel().getId(),authentication)).withRel("Game: " + highScoreModel.getGamesModel().getTitle());
     }
 
     private EntityModel<HighScoreModel> getHighScoreEntityModel(HighScoreModel highScoreModel, String currentOwner, Authentication authentication){
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getScoreById(highScoreModel.getScoreId(),currentOwner,authentication)).withSelfRel();
-        return EntityModel.of(highScoreModel, getUserLink(highScoreModel, currentOwner, authentication), getGameLink(highScoreModel, currentOwner,authentication), selfLink);
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(HighScoreApiController.class).getScoreById(highScoreModel.getScoreId(),authentication)).withSelfRel();
+        return EntityModel.of(highScoreModel, getUserLink(highScoreModel, currentOwner, authentication), getGameLink(highScoreModel,authentication), selfLink);
     }
 }

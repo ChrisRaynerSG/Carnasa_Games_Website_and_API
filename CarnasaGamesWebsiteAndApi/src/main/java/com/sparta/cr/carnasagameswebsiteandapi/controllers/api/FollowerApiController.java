@@ -32,22 +32,20 @@ public class FollowerApiController {
 
     @GetMapping("/search/id/{userId}/following")
     public ResponseEntity<CollectionModel<EntityModel<FollowerModel>>> getAllFollowingByUserId(@PathVariable("userId") Long userId,
-                                                                                               @CurrentOwner String currentUser,
                                                                                                Authentication authentication){
         List<EntityModel<FollowerModel>> following = followerService.getAllFollowingByUserId(userId).stream().map( followerModel ->
-                getUserEntityModel(followerModel).add(getUserLink(followerModel, currentUser, authentication))
+                getUserEntityModel(followerModel).add(getUserLink(followerModel, authentication.getName(), authentication))
         ).toList();
-        return ResponseEntity.ok(CollectionModel.of(following).add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userId, currentUser, authentication)).withSelfRel()));
+        return ResponseEntity.ok(CollectionModel.of(following).add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userId, authentication)).withSelfRel()));
     }
 
     @GetMapping("/search/id/{userId}/followers")
     public ResponseEntity<CollectionModel<EntityModel<FollowerModel>>> getAllFollowersByUserId(@PathVariable("userId") Long userId,
-                                                                                               @CurrentOwner String currentUser,
                                                                                                Authentication authentication){
         List<EntityModel<FollowerModel>> followers = followerService.getAllFollowersByUserId(userId).stream().map( followerModel ->
-                getUserEntityModel(followerModel).add(getFollowerLink(followerModel, currentUser, authentication))
+                getUserEntityModel(followerModel).add(getFollowerLink(followerModel, authentication.getName(), authentication))
         ).toList();
-        return ResponseEntity.ok(CollectionModel.of(followers).add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userId, currentUser, authentication)).withSelfRel()));
+        return ResponseEntity.ok(CollectionModel.of(followers).add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(userId,authentication)).withSelfRel()));
     }
 
     @GetMapping("/search/id/{userId}/followers/number")
@@ -80,7 +78,7 @@ public class FollowerApiController {
             return Link.of("/").withRel("Private user");
         }
         else {
-            return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getUser().getId(), currentUser, authentication)).withRel("Following: " + followerModel.getUser().getUsername());
+            return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getUser().getId(), authentication)).withRel("Following: " + followerModel.getUser().getUsername());
         }
     }
     private Link getFollowerLink(FollowerModel followerModel, String currentUser, Authentication authentication) {
@@ -88,7 +86,7 @@ public class FollowerApiController {
             return Link.of("/").withRel("Private user");
         }
         else {
-            return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getFollower().getId(), currentUser, authentication)).withRel("Follower: " + followerModel.getFollower().getUsername());
+            return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserApiController.class).getUserById(followerModel.getFollower().getId(),authentication)).withRel("Follower: " + followerModel.getFollower().getUsername());
         }
     }
 

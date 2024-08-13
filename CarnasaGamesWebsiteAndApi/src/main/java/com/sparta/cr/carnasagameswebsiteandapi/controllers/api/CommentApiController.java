@@ -37,33 +37,30 @@ public class CommentApiController {
     }
 
     @GetMapping("/search/all")
-    public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllComments(@CurrentOwner String username,
-                                                                                     Authentication authentication) {
+    public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllComments(Authentication authentication) {
         List<EntityModel<CommentModel>> comments = commentService.getAllComments()
-                .stream().map(comment -> getCommentEntityModel(comment, username, authentication)).toList();
+                .stream().map(comment -> getCommentEntityModel(comment, authentication.getName(), authentication)).toList();
         return new ResponseEntity<>(CollectionModel.of(comments).add(
-                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getAllComments(username,authentication)).withSelfRel())
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getAllComments(authentication)).withSelfRel())
                 , HttpStatus.OK);
     }
     @GetMapping("/search/{commentId}")
     public ResponseEntity<EntityModel<CommentModel>> getCommentById(@PathVariable Long commentId,
-                                                                    @CurrentOwner String username,
                                                                     Authentication authentication) {
         if(commentService.getComment(commentId).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         CommentModel commentModel = commentService.getComment(commentId).get();
-        return ResponseEntity.ok(getCommentEntityModel(commentModel,username,authentication));
+        return ResponseEntity.ok(getCommentEntityModel(commentModel, authentication.getName(), authentication));
     }
     @GetMapping("/search/game/{gameId}")
     public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByGame(@PathVariable Long gameId,
-                                                                                           @CurrentOwner String username,
                                                                                            Authentication authentication) {
         if(gameService.getGame(gameId).isEmpty()) {
             throw new ModelNotFoundException("Game with ID: " + gameId + " not found");
         }
        List<EntityModel<CommentModel>> comments = commentService.getCommentsByGame(gameId).stream().map(
-               comment -> getCommentEntityModel(comment, username, authentication)
+               comment -> getCommentEntityModel(comment, authentication.getName(), authentication)
        ).toList();
        if(comments.isEmpty()) {
            return ResponseEntity.notFound().build();
@@ -72,24 +69,22 @@ public class CommentApiController {
     }
     @GetMapping("/search/user/{userId}")
     public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByUser(@PathVariable Long userId,
-                                                                                           @CurrentOwner String username,
                                                                                            Authentication authentication) {
         if(userService.getUser(userId).isEmpty()) {
             throw new UserNotFoundException(userId.toString());
         }
         List<EntityModel<CommentModel>> comments = commentService.getCommentsByUser(userId).stream().map(
-                comment -> getCommentEntityModel(comment, username, authentication)).toList();
+                comment -> getCommentEntityModel(comment, authentication.getName(), authentication)).toList();
         if(comments.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         return new ResponseEntity<>(CollectionModel.of(comments), HttpStatus.OK);
     }
     @GetMapping("/search/date/today")
-    public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByDateToday(@CurrentOwner String username,
-                                                                                                Authentication authentication) {
+    public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByDateToday(Authentication authentication) {
         LocalDate today = LocalDate.now();
         List<EntityModel<CommentModel>> comments = commentService.getCommentsFromToday(today).stream().map(
-                comment -> getCommentEntityModel(comment,username,authentication)).toList();
+                comment -> getCommentEntityModel(comment, authentication.getName(), authentication)).toList();
         if(comments.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -98,11 +93,10 @@ public class CommentApiController {
     @GetMapping("/search/date/{date1}/{date2}")
     public ResponseEntity<CollectionModel<EntityModel<CommentModel>>> getAllCommentsByDate(@PathVariable String date1,
                                                                                            @PathVariable String date2,
-                                                                                           @CurrentOwner String username,
                                                                                            Authentication authentication) {
 
         List<EntityModel<CommentModel>> comments = commentService.getCommentsByDate(date1, date2).stream().map(
-                comment -> getCommentEntityModel(comment, username, authentication)).toList();
+                comment -> getCommentEntityModel(comment, authentication.getName(), authentication)).toList();
         if(comments.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -111,19 +105,17 @@ public class CommentApiController {
 
     @PostMapping("/new")
     public ResponseEntity<EntityModel<CommentModel>> createComment(@RequestBody CommentModel commentModel,
-                                                                   @CurrentOwner String username,
                                                                    Authentication authentication) {
         if(!commentService.validateNewComment(commentModel)){
             return ResponseEntity.badRequest().build();
         }
         CommentModel newComment = commentService.createComment(commentModel);
         URI location = URI.create("/api/comments/search/"+newComment.getId());
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getCommentById(newComment.getId(), username, authentication)).withSelfRel();
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getCommentById(newComment.getId(),authentication)).withSelfRel();
         return ResponseEntity.created(location).body(EntityModel.of(newComment).add(selfLink));
     }
     @PutMapping("/update/{commentId}")
-    public ResponseEntity updateComment(@PathVariable Long commentId, @RequestBody CommentModel commentModel,
-                                        @CurrentOwner String username, Authentication authentication) {
+    public ResponseEntity updateComment(@PathVariable Long commentId, @RequestBody CommentModel commentModel, Authentication authentication) {
         if(commentService.getComment(commentId).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -138,7 +130,7 @@ public class CommentApiController {
     }
 
     @DeleteMapping("/delete/{commentId}")
-    public ResponseEntity deleteComment(@PathVariable Long commentId, @CurrentOwner String username,
+    public ResponseEntity deleteComment(@PathVariable Long commentId,
                                         Authentication authentication) {
         if(commentService.getComment(commentId).isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -154,22 +146,22 @@ public class CommentApiController {
         else {
             return WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder
                             .methodOn(UserApiController.class)
-                            .getUserById(commentModel.getUserModel().getId(),currentUser,authentication))
+                            .getUserById(commentModel.getUserModel().getId(),authentication))
                     .withRel("User: " + commentModel.getUserModel().getUsername());
         }
     }
 
-    private Link getGameLink(CommentModel commentModel, String currentUser, Authentication authentication){
+    private Link getGameLink(CommentModel commentModel, Authentication authentication){
         return WebMvcLinkBuilder
                 .linkTo(WebMvcLinkBuilder
-                .methodOn(GameApiController.class).getGameById(commentModel.getGamesModel().getId(), currentUser, authentication))
+                .methodOn(GameApiController.class).getGameById(commentModel.getGamesModel().getId(), authentication))
                 .withRel("Game: " + commentModel.getGamesModel().getTitle());
     }
 
     private EntityModel<CommentModel> getCommentEntityModel(CommentModel commentModel, String currentUser, Authentication authentication) {
-        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getCommentById(commentModel.getId(), currentUser, authentication)).withSelfRel();
-        Link relink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getAllComments(currentUser,authentication)).withRel("All Comments");
-        return EntityModel.of(commentModel, selfLink, relink, getUserLink(commentModel, currentUser, authentication), getGameLink(commentModel, currentUser, authentication));
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getCommentById(commentModel.getId(),authentication)).withSelfRel();
+        Link relink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getAllComments(authentication)).withRel("All Comments");
+        return EntityModel.of(commentModel, selfLink, relink, getUserLink(commentModel, currentUser, authentication), getGameLink(commentModel,authentication));
     }
 
     private boolean isUserAccountPrivateAndHidden(CommentModel commentModel, String currentUser, Authentication authentication){
