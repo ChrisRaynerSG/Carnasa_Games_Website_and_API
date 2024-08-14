@@ -1,5 +1,6 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
 
+import com.sparta.cr.carnasagameswebsiteandapi.config.CensorConfig;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidTitleException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
@@ -26,11 +27,13 @@ public class GameServiceImpl implements GameServicable {
 
     private final UserServiceImpl userServiceImpl;
     private final GameRepository gameRepository;
+    private final CensorConfig censorConfig;
 
     @Autowired
-    public GameServiceImpl(GameRepository gameRepository, UserServiceImpl userServiceImpl) {
+    public GameServiceImpl(GameRepository gameRepository, UserServiceImpl userServiceImpl, CensorConfig censorConfig) {
         this.gameRepository = gameRepository;
         this.userServiceImpl = userServiceImpl;
+        this.censorConfig = censorConfig;
     }
 
     @Override
@@ -133,14 +136,20 @@ public class GameServiceImpl implements GameServicable {
         if(!game.getTitle().matches("[a-zA-Z0-9\\s]+")){
             throw new InvalidTitleException(game.getTitle());
         }
+        if(censorConfig.censorBadText(game.getTitle()).contains("*")){
+            throw new InvalidUserException("Please choose a title that does not contain inappropriate language");
+        }
+        if(censorConfig.censorBadText(game.getDescription()).contains("*")){
+            throw new InvalidUserException("Game description may not contain inappropriate language");
+        }
         return true;
     }
 
-//    public GameModel increasePlaysByOne(GameModel game){
-//        game.setTimesPlayed(game.getTimesPlayed() + 1);
-//        return gameRepository.save(game);
-//        //might not need this but might be good for webController to increase every time page is clicked
-//    }
+    public GameModel increasePlaysByOne(GameModel game){
+        game.setTimesPlayed(game.getTimesPlayed() + 1);
+        return gameRepository.save(game);
+        //might not need this but might be good for webController to increase every time page is clicked
+    }
 
     public boolean validateExistingGame(GameModel game) {
         Matcher matcher = getGenreMatcher(game.getGenre().getGenre());
@@ -157,7 +166,6 @@ public class GameServiceImpl implements GameServicable {
                 throw new InvalidTitleException(game.getTitle());
             }
         }
-
         if(!beforeUpdate.getGenre().equals(game.getGenre())){
             if(!matcher.matches()){
                 throw new InvalidGenreException(game.getGenre().getGenre());
@@ -165,6 +173,14 @@ public class GameServiceImpl implements GameServicable {
         }
         if(userServiceImpl.getUser(game.getCreator().getId()).isEmpty()){
             throw new InvalidUserException("cannot update game with no creator");
+        }
+
+        if(censorConfig.censorBadText(game.getTitle()).contains("*")){
+            throw new InvalidUserException("Please choose a title that does not contain inappropriate language");
+        }
+
+        if(censorConfig.censorBadText(game.getDescription()).contains("*")){
+            throw new InvalidUserException("Game description may not contain inappropriate language");
         }
         return true;
     }

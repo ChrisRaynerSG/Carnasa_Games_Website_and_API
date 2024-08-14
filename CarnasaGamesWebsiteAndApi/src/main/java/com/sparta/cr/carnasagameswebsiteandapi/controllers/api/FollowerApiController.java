@@ -1,5 +1,6 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericForbiddenException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModel;
 import com.sparta.cr.carnasagameswebsiteandapi.security.jwt.AnonymousAuthentication;
@@ -63,9 +64,18 @@ public class FollowerApiController {
         if(authentication == null){
             throw new GenericUnauthorizedException("Please login first to follow user");
         }
-        followerService.validateNewFollower(followerModel);
-        followerService.followNewUser(followerModel);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        if(userService.getUserByUsername(authentication.getName()).isEmpty()){ //shouldn't happen
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        if(followerModel.getFollower().getUsername().equals(authentication.getName())){
+            followerModel.setFollower(userService.getUserByUsername(authentication.getName()).get());
+            followerService.validateNewFollower(followerModel);
+            followerService.followNewUser(followerModel);
+            return new ResponseEntity<>(HttpStatus.CREATED);
+        }
+        else {
+            throw new GenericForbiddenException("You cannot follow users for someone else.");
+        }
     }
 
     @DeleteMapping("/delete/follower/{userId}/{followerId}")
@@ -74,14 +84,17 @@ public class FollowerApiController {
         if(authentication == null){
             throw new GenericUnauthorizedException("Please login first to unfollow user");
         }
-
         if(userService.getUser(userId).isEmpty()||userService.getUser(followerId).isEmpty()){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        followerService.unfollowUser(userId, followerId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        if(userService.getUser(followerId).get().getUsername().equals(authentication.getName())){
+            followerService.unfollowUser(userId, followerId);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        else {
+            throw new GenericForbiddenException("You cannot unfollow users for someone else.");
+        }
     }
-
 
     private Link getUserLink(FollowerModel followerModel, String currentUser, Authentication authentication) {
         if(isUserPrivateAndNotVisible(authentication, currentUser, followerModel)){

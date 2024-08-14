@@ -1,4 +1,5 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
+import com.sparta.cr.carnasagameswebsiteandapi.config.CensorConfig;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
@@ -36,11 +37,13 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CensorConfig censorConfig;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, CensorConfig censorConfig) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.censorConfig = censorConfig;
     }
 
 //    @Override
@@ -198,6 +201,9 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         else if(!validateUsername(user.getUsername())){
             throw new InvalidUsernameException(user.getUsername());
         }
+        else if (censorConfig.censorBadText(user.getUsername()).contains("*")) {
+            throw new InvalidUserException("Username cannot contain inappropriate language.");
+        }
         else if(!usernameExists(user)){
             throw new UsernameAlreadyExistsException(user.getUsername());
         }
@@ -209,6 +215,9 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         }
         else if(!validatePassword(user.getPassword())){
             throw new InvalidPasswordException();
+        }
+        else if(censorConfig.censorBadText(user.getDescription()).contains("*")) {
+            throw new InvalidUserException("User description cannot contain inappropriate language.");
         }
         return true;
     }
@@ -238,6 +247,9 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
             if(!user.getRoles().equals("ROLE_USER") || !user.getRoles().equals("ROLE_ADMIN")){
                 throw new InvalidRoleException();
             }
+        }
+        if(censorConfig.censorBadText(user.getDescription()).contains("*")) {
+            throw new InvalidUserException("User description cannot contain inappropriate language.");
         }
         return true;
     }

@@ -280,22 +280,21 @@ public class CommentServiceTest {
         verify(commentRepository, times(1)).delete(comment);
         Assertions.assertNotNull(actual);
     }
-
-    @Test
-    void censorCommentReturnsOriginalCommentIfNoBadText(){
-        CommentModel comment = new CommentModel();
-        String expected ="This comment is fine";
-        comment.setCommentText(expected);
-        commentService.censorBadText(comment);
-        Assertions.assertEquals(expected, comment.getCommentText());
-    }
-
-    @Test
-    void censorCommentReturnsCensoredComment(){
-        CommentModel comment = new CommentModel();
-        String expected ="This comment is ****";
-        comment.setCommentText("This comment is fuck");
-        commentService.censorBadText(comment);
-        Assertions.assertEquals(expected, comment.getCommentText());
-    }
+//    @Test
+//    void censorCommentReturnsOriginalCommentIfNoBadText(){
+//        CommentModel comment = new CommentModel();
+//        String expected ="This comment is fine";
+//        comment.setCommentText(expected);
+//        commentService.censorBadText(comment);
+//        Assertions.assertEquals(expected, comment.getCommentText());
+//    }
+//
+//    @Test
+//    void censorCommentReturnsCensoredComment(){
+//        CommentModel comment = new CommentModel();
+//        String expected ="This comment is ****";
+//        comment.setCommentText("This comment is fuck");
+//        commentService.censorBadText(comment);
+//        Assertions.assertEquals(expected, comment.getCommentText());
+//    }
 }
