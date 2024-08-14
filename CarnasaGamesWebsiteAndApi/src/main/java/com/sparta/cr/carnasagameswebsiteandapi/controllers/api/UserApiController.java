@@ -146,17 +146,9 @@ public class UserApiController {
 //    }
 
     @PatchMapping("/update/{userId}/roles")
-    public ResponseEntity<EntityModel<UserModel>> grantOrRemoveAdmin(@PathVariable Long userId, Authentication authentication) {
-        if(authentication == null){
-            throw new GenericUnauthorizedException("Please login as admin");
-        }
-        if(!isRoleAdmin(authentication)){
-            throw new ForbiddenRoleException();
-        }
-        else{
+    public ResponseEntity<EntityModel<UserModel>> grantOrRemoveAdmin(@PathVariable Long userId) {
             userService.updateUserRoles(userId);
             return ResponseEntity.noContent().build();
-        }
     }
 
     @PatchMapping("update/{userId}/password")
