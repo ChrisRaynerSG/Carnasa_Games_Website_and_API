@@ -4,6 +4,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.Model
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.*;
 import com.sparta.cr.carnasagameswebsiteandapi.models.*;
+import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UpdatePasswordDto;
 import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UserDto;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.FollowerRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
@@ -141,6 +142,25 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         }
         else {
             return null;
+        }
+    }
+
+    public UserModel updateUserPassword(UpdatePasswordDto updatePasswordDto) {
+        if(getUser(updatePasswordDto.getId()).isEmpty()){
+            throw new InvalidUserException("User with id: "+ updatePasswordDto.getId() + " not found");
+        }
+        else{
+            UserModel update = getUser(updatePasswordDto.getId()).get();
+            if(!passwordEncoder.matches(updatePasswordDto.getOldPassword(), update.getPassword())){
+                throw new InvalidUserException("Old password does not match");
+            }
+            if(updatePasswordDto.getNewPassword().equals(updatePasswordDto.getConfirmPassword())){
+                update.setPassword(passwordEncoder.encode(updatePasswordDto.getNewPassword()));
+                return userRepository.save(update);
+            }
+            else {
+                throw new InvalidUserException("New password and confirmation password do not match. Please ensure both fields contain the same password");
+            }
         }
     }
 
