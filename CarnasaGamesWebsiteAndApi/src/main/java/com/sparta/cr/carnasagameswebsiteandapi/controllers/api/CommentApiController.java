@@ -154,7 +154,7 @@ public class CommentApiController {
             return ResponseEntity.noContent().build();
         }
         else{
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can not update another users comment.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can not update another user's comment.");
         }
     }
     @DeleteMapping("/delete/{commentId}")
@@ -180,7 +180,7 @@ public class CommentApiController {
             return ResponseEntity.noContent().build();
         }
         else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can not delete another users comment.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can not delete another user's comment.");
         }
     }
 
