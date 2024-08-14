@@ -52,6 +52,8 @@ public class SecurityConfig {
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtilities,userService), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/**").permitAll()
+                        .requestMatchers("/api/carnasa-game-api/v1/scores/update/**"
+                                , "/api/carnasa-game-api/v1/scores/delete/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .anonymous(anon -> anon
                         .principal("anonymousUser")

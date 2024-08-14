@@ -137,6 +137,10 @@ public class HighScoreApiController {
         if(authentication == null){
             throw new InvalidUserException("Please login to save a new high score");
         }
+        if(userService.getUserByUsername(authentication.getName()).isEmpty()){//should not happen
+            throw new InvalidUserException("Please login to save a new high score");
+        }
+        highScoreModel.setUserModel(userService.getUserByUsername(authentication.getName()).get()); //set user as logged in user
         highScoreService.validateNewHighScore(highScoreModel);
         HighScoreModel newHighScore = highScoreService.createHighScore(highScoreModel);
         URI location = URI.create("/api/scores/search/" + newHighScore.getScoreId());
@@ -145,6 +149,7 @@ public class HighScoreApiController {
     }
     @PutMapping("/update/{scoreId}")
     public ResponseEntity<EntityModel<HighScoreModel>> updateHighScore(@PathVariable Long scoreId, @RequestBody HighScoreModel highScoreModel, Authentication authentication){
+        //update so only admin can update score
         if(authentication == null){
             throw new GenericUnauthorizedException("Please login as admin to update this score");
         }
