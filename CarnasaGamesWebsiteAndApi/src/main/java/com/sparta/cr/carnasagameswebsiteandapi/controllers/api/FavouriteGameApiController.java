@@ -1,6 +1,5 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
-import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentOwner;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidGameException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FavouriteGameModel;

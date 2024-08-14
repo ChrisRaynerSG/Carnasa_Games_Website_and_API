@@ -1,9 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
-import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentOwner;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModel;
-import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.security.jwt.AnonymousAuthentication;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.FollowerServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;

@@ -6,9 +6,7 @@ import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNot
 import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModelId;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.FollowerRepository;
-import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

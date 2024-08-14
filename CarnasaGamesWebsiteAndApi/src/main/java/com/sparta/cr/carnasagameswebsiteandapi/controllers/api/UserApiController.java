@@ -2,7 +2,6 @@ package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ForbiddenRoleException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UsernameNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;

@@ -1,16 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import org.springframework.boot.context.properties.bind.DefaultValue;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-
 
 @Entity
 @Table(schema = "games_website", name = "users")
