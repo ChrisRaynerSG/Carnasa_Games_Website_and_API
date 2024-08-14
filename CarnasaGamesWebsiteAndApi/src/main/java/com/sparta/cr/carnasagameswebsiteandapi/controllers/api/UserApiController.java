@@ -131,9 +131,8 @@ public class UserApiController {
 //    public ResponseEntity<EntityModel<UserModel>> updateUserFieldIndividually(@PathVariable Long userId, @PathVariable String field,  Authentication authentication) {
 //
 //        //if password require previous password input and only user can change this, if anything else no password input and admin can change. (maybe two different endpoints for this)
-//
 //        if(authentication == null){
-//            throw new GenericUnauthorizedException("Please login as user: " + userId + " to update " + field);
+//            throw new GenericUnauthorizedException("Please login as admin or user: " + userId + " to update " + field);
 //        }
 //        if(userService.getUser(userId).isEmpty()) {
 //            throw new UserNotFoundException(userId.toString());
@@ -142,9 +141,23 @@ public class UserApiController {
 //            throw new ForbiddenRoleException();
 //        }
 //        else {
-//            userService.updateUserPassword(userId,oldPassword,newPassword);
+//
 //        }
 //    }
+
+    @PatchMapping("/update/{userId}/roles")
+    public ResponseEntity<EntityModel<UserModel>> grantOrRemoveAdmin(@PathVariable Long userId, Authentication authentication) {
+        if(authentication == null){
+            throw new GenericUnauthorizedException("Please login as admin");
+        }
+        if(!isRoleAdmin(authentication)){
+            throw new ForbiddenRoleException();
+        }
+        else{
+            userService.updateUserRoles(userId);
+            return ResponseEntity.noContent().build();
+        }
+    }
 
     @PatchMapping("update/{userId}/password")
     public ResponseEntity<EntityModel<UserModel>> updateUserPassword(@PathVariable Long userId, @RequestBody UpdatePasswordDto updatePasswordDto, Authentication authentication) {

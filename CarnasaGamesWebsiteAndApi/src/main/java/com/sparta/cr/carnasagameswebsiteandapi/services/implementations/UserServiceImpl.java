@@ -145,9 +145,26 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         }
     }
 
+    public UserModel updateUserRoles(Long userId) {
+        //only want to add or remove ROLE_ADMIN
+        if(getUser(userId).isEmpty()){
+            throw new UserNotFoundException(userId.toString());
+        }
+        else {
+            UserModel update = getUser(userId).get();
+            if(update.getRoles().contains("ROLE_ADMIN")){
+                update.getRoles().remove("ROLE_ADMIN");
+            }
+            else{
+                update.getRoles().add("ROLE_ADMIN");
+            }
+            return userRepository.save(update);
+        }
+    }
+
     public UserModel updateUserPassword(UpdatePasswordDto updatePasswordDto) {
         if(getUser(updatePasswordDto.getId()).isEmpty()){
-            throw new InvalidUserException("User with id: "+ updatePasswordDto.getId() + " not found");
+            throw new UserNotFoundException(updatePasswordDto.getId().toString());
         }
         else{
             UserModel update = getUser(updatePasswordDto.getId()).get();
