@@ -1,5 +1,6 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ForbiddenRoleException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
@@ -113,16 +114,21 @@ public class CommentApiController {
     public ResponseEntity<EntityModel<CommentModel>> createComment(@RequestBody CommentModel commentModel,
                                                                    Authentication authentication) {
         if(authentication == null){
-            throw new GenericUnauthorizedException("Please login first to comment.");
+            throw new GenericUnauthorizedException("Please login or register first to comment.");
         }
         if(!commentService.validateNewComment(commentModel)){
             return ResponseEntity.badRequest().build();
         }
+        if(userService.getUserByUsername(authentication.getName()).isEmpty()){
+            return ResponseEntity.badRequest().build();
+        }
+        commentModel.setUserModel(userService.getUserByUsername(authentication.getName()).get()); //set user to be currently logged in user. Do I want anonymous comments?
         CommentModel newComment = commentService.createComment(commentModel);
         URI location = URI.create("/api/comments/search/"+newComment.getId());
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CommentApiController.class).getCommentById(newComment.getId(),authentication)).withSelfRel();
         return ResponseEntity.created(location).body(EntityModel.of(newComment).add(selfLink));
     }
+
     @PutMapping("/update/{commentId}")
     public ResponseEntity updateComment(@PathVariable Long commentId, @RequestBody CommentModel commentModel, Authentication authentication) {
         if(authentication == null){
@@ -137,10 +143,20 @@ public class CommentApiController {
         if(!commentService.validateExistingComment(commentModel)) {
             return ResponseEntity.badRequest().build();
         }
-        commentService.updateComment(commentModel);
-        return ResponseEntity.noContent().build();
+        if(userService.getUserByUsername(authentication.getName()).isEmpty()){
+            return ResponseEntity.badRequest().build();
+        }
+        if(userService.getUser(commentModel.getUserModel().getId()).isEmpty()){
+            return ResponseEntity.badRequest().build();
+        }
+        if(userService.getUser(commentModel.getUserModel().getId()).get().getUsername().equals(authentication.getName()) || isRoleAdmin(authentication)) {
+            commentService.updateComment(commentModel);
+            return ResponseEntity.noContent().build();
+        }
+        else{
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can not update another users comment.");
+        }
     }
-
     @DeleteMapping("/delete/{commentId}")
     public ResponseEntity deleteComment(@PathVariable Long commentId,
                                         Authentication authentication) {
@@ -155,8 +171,17 @@ public class CommentApiController {
         if(commentService.getComment(commentId).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        commentService.deleteComment(commentId);
-        return ResponseEntity.noContent().build();
+        CommentModel commentModel = commentService.getComment(commentId).get();
+        if(userService.getUser(commentModel.getUserModel().getId()).isEmpty()){
+            return ResponseEntity.badRequest().build();
+        }
+        if(userService.getUser(commentModel.getUserModel().getId()).get().getUsername().equals(authentication.getName()) || isRoleAdmin(authentication)) {
+            commentService.deleteComment(commentId);
+            return ResponseEntity.noContent().build();
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can not delete another users comment.");
+        }
     }
 
     private Link getUserLink(CommentModel commentModel, String currentUser, Authentication authentication){
@@ -189,5 +214,8 @@ public class CommentApiController {
                 && authentication.getAuthorities().stream().noneMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))
                 && !commentModel.getUserModel().getUsername().equals(currentUser);
 
+    }
+    private boolean isRoleAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
     }
 }
