@@ -3,6 +3,7 @@ package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericForbiddenException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModel;
+import com.sparta.cr.carnasagameswebsiteandapi.models.FollowerModelId;
 import com.sparta.cr.carnasagameswebsiteandapi.security.jwt.AnonymousAuthentication;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.FollowerServiceImpl;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.UserServiceImpl;
@@ -67,14 +68,19 @@ public class FollowerApiController {
         if(userService.getUserByUsername(authentication.getName()).isEmpty()){ //shouldn't happen
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
+        followerModel.setFollower(userService.getUserByUsername(authentication.getName()).get());
+        FollowerModelId modelId = followerModel.getId();
+        modelId.setFollower_id(userService.getUserByUsername(authentication.getName()).get().getId());
+        followerModel.setId(modelId);
+
         if(followerModel.getFollower().getUsername().equals(authentication.getName())){
-            followerModel.setFollower(userService.getUserByUsername(authentication.getName()).get());
             followerService.validateNewFollower(followerModel);
             followerService.followNewUser(followerModel);
             return new ResponseEntity<>(HttpStatus.CREATED);
         }
         else {
-            throw new GenericForbiddenException("You cannot follow users for someone else.");
+            throw new GenericForbiddenException("You cannot follow users for someone else."); //shouldn't need this now
         }
     }
 

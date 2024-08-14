@@ -1,6 +1,5 @@
 package com.sparta.cr.carnasagameswebsiteandapi.config;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.regex.Matcher;
@@ -9,7 +8,6 @@ import java.util.regex.Pattern;
 @Configuration
 public class CensorConfig {
 
-    @Bean
     public String censorBadText(String text){
         if(text == null || text.isEmpty()){
             return "";
