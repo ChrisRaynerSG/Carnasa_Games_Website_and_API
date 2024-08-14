@@ -154,6 +154,9 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
             if(!passwordEncoder.matches(updatePasswordDto.getOldPassword(), update.getPassword())){
                 throw new InvalidUserException("Old password does not match");
             }
+            if(!validatePassword(updatePasswordDto.getNewPassword())){
+                throw new InvalidPasswordException();
+            }
             if(updatePasswordDto.getNewPassword().equals(updatePasswordDto.getConfirmPassword())){
                 update.setPassword(passwordEncoder.encode(updatePasswordDto.getNewPassword()));
                 return userRepository.save(update);

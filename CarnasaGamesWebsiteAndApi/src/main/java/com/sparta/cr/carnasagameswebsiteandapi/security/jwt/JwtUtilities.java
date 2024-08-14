@@ -45,9 +45,6 @@ public class JwtUtilities {
     public String generateToken(SecurityUser user){
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
-        for (Map.Entry<String,Object> claim : claims.entrySet()) {
-            System.out.println(claim.getKey() + " " + claim.getValue());
-        }
         return createToken(claims, user.getUsername());
     }
 

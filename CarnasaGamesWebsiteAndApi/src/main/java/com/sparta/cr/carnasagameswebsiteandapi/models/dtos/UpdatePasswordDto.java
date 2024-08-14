@@ -4,17 +4,10 @@ import java.util.Objects;
 
 public class UpdatePasswordDto {
 
-    private final String oldPassword;
-    private final String newPassword;
-    private final String confirmPassword;
-    private final Long id;
-
-    public UpdatePasswordDto(String oldPassword, String newPassword, String confirmPassword, Long id) {
-        this.oldPassword = oldPassword;
-        this.newPassword = newPassword;
-        this.confirmPassword = confirmPassword;
-        this.id = id;
-    }
+    private String oldPassword;
+    private String newPassword;
+    private String confirmPassword;
+    private Long id;
 
     public String getOldPassword() {
         return oldPassword;
@@ -30,6 +23,22 @@ public class UpdatePasswordDto {
 
     public Long getId() {
         return id;
+    }
+
+    public void setOldPassword(String oldPassword) {
+        this.oldPassword = oldPassword;
+    }
+
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @Override
