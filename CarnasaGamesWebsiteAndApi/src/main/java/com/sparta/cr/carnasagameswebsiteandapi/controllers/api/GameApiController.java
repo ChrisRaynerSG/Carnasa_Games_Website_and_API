@@ -2,6 +2,7 @@ package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.gameexceptions.InvalidGenreException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
+import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.GameModel;
 import com.sparta.cr.carnasagameswebsiteandapi.models.HighScoreModel;
@@ -188,10 +189,13 @@ public class GameApiController {
         if(authentication==null){
             throw new GenericUnauthorizedException("Please login before creating a new game");
         }
-        //add endpoint security so only registered members can create game, also pull game creator from current owner
         if(!gameService.validateNewGame(gameModel)){
             return ResponseEntity.badRequest().build();
         }
+        if(userService.getUserByUsername(authentication.getName()).isEmpty()){
+            throw new ModelNotFoundException("User not found");
+        }
+        gameModel.setCreator(userService.getUserByUsername(authentication.getName()).get());
         GameModel newGame = gameService.createGame(gameModel);
         URI location = URI.create("/api/games/search/id/"+newGame.getId());
         Link selfLink = WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getGameById(newGame.getId(),authentication)).withSelfRel();
@@ -203,7 +207,7 @@ public class GameApiController {
                                      @RequestBody GameModel gameModel,
                                      Authentication authentication){
         if(authentication==null){
-            throw new GenericUnauthorizedException("Please login as admin or user: " + gameModel.getCreator().getId() + " before updating this game."); //may need to change this to update how many times games are played in the future.
+            throw new GenericUnauthorizedException("Please login as admin or user: " + gameModel.getCreator().getId() + " before updating this game.");
         }
         if(gameService.getGame(gameId).isEmpty()){
             return ResponseEntity.notFound().build();
@@ -214,9 +218,32 @@ public class GameApiController {
         if(!gameService.validateExistingGame(gameModel)){
             return ResponseEntity.badRequest().build();
         }
-        gameService.updateGame(gameModel);
+        if(userService.getUserByUsername(authentication.getName()).isEmpty()){//shouldn't ever happen but I dont like yellow squigglies
+            throw new ModelNotFoundException("User not found");
+        }
+        if(isRoleAdmin(authentication)||gameModel.getCreator().getUsername().equals(userService.getUserByUsername(authentication.getName()).get().getUsername())){
+            if(!isRoleAdmin(authentication)){
+                gameModel.setTimesPlayed(gameService.getGame(gameId).get().getTimesPlayed()); //ensure playtime not updated
+            }
+            gameService.updateGame(gameModel);
+            return ResponseEntity.noContent().build();
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can not update another users game.");
+        }
+    }
+
+    @PatchMapping("/id/{gameId}/increase-play-count")
+    public ResponseEntity increasePlayCount(@PathVariable("gameId") Long gameId){
+        if(gameService.getGame(gameId).isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+        GameModel gameModel = gameService.getGame(gameId).get();
+        gameService.increasePlaysByOne(gameModel);
         return ResponseEntity.noContent().build();
     }
+
+    //patch mapping for updating if published?
 
     @DeleteMapping("/delete/{gameId}")
     public ResponseEntity deleteGame(@PathVariable("gameId") Long gameId,
@@ -285,6 +312,8 @@ public class GameApiController {
     private EntityModel<GameModel> getGameEntityModel(GameModel gameModel, String currentUser, Authentication authentication){
         Link selfLink = WebMvcLinkBuilder.linkTo(methodOn(GameApiController.class).getGameById(gameModel.getId(),authentication)).withSelfRel();
         return EntityModel.of(gameModel, selfLink, getGameCreator(gameModel, currentUser, authentication)).add(getGameScores(gameModel, currentUser, authentication)).add(getGameComments(gameModel, authentication));
-
+    }
+    private boolean isRoleAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream().anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
     }
 }

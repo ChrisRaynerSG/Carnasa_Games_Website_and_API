@@ -1,9 +1,11 @@
 package com.sparta.cr.carnasagameswebsiteandapi.services.implementations;
+import com.sparta.cr.carnasagameswebsiteandapi.config.CensorConfig;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelAlreadyExistsException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.*;
 import com.sparta.cr.carnasagameswebsiteandapi.models.*;
+import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UpdatePasswordDto;
 import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UserDto;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.FollowerRepository;
 import com.sparta.cr.carnasagameswebsiteandapi.repositories.UserRepository;
@@ -35,11 +37,13 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CensorConfig censorConfig;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, CensorConfig censorConfig) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.censorConfig = censorConfig;
     }
 
 //    @Override
@@ -144,6 +148,45 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         }
     }
 
+    public UserModel updateUserRoles(Long userId) {
+        //only want to add or remove ROLE_ADMIN
+        if(getUser(userId).isEmpty()){
+            throw new UserNotFoundException(userId.toString());
+        }
+        else {
+            UserModel update = getUser(userId).get();
+            if(update.getRoles().contains("ROLE_ADMIN")){
+                update.getRoles().remove("ROLE_ADMIN");
+            }
+            else{
+                update.getRoles().add("ROLE_ADMIN");
+            }
+            return userRepository.save(update);
+        }
+    }
+
+    public UserModel updateUserPassword(UpdatePasswordDto updatePasswordDto) {
+        if(getUser(updatePasswordDto.getId()).isEmpty()){
+            throw new UserNotFoundException(updatePasswordDto.getId().toString());
+        }
+        else{
+            UserModel update = getUser(updatePasswordDto.getId()).get();
+            if(!passwordEncoder.matches(updatePasswordDto.getOldPassword(), update.getPassword())){
+                throw new InvalidUserException("Old password does not match");
+            }
+            if(!validatePassword(updatePasswordDto.getNewPassword())){
+                throw new InvalidPasswordException();
+            }
+            if(updatePasswordDto.getNewPassword().equals(updatePasswordDto.getConfirmPassword())){
+                update.setPassword(passwordEncoder.encode(updatePasswordDto.getNewPassword()));
+                return userRepository.save(update);
+            }
+            else {
+                throw new InvalidUserException("New password and confirmation password do not match. Please ensure both fields contain the same password");
+            }
+        }
+    }
+
     @Override
     public UserModel deleteUser(Long userId) {
         Optional<UserModel> user = getUser(userId);
@@ -158,6 +201,9 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         else if(!validateUsername(user.getUsername())){
             throw new InvalidUsernameException(user.getUsername());
         }
+        else if (censorConfig.censorBadText(user.getUsername()).contains("*")) {
+            throw new InvalidUserException("Username cannot contain inappropriate language.");
+        }
         else if(!usernameExists(user)){
             throw new UsernameAlreadyExistsException(user.getUsername());
         }
@@ -169,6 +215,9 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
         }
         else if(!validatePassword(user.getPassword())){
             throw new InvalidPasswordException();
+        }
+        else if(censorConfig.censorBadText(user.getDescription()).contains("*")) {
+            throw new InvalidUserException("User description cannot contain inappropriate language.");
         }
         return true;
     }
@@ -198,6 +247,9 @@ public class UserServiceImpl extends DefaultOAuth2UserService implements UserSer
             if(!user.getRoles().equals("ROLE_USER") || !user.getRoles().equals("ROLE_ADMIN")){
                 throw new InvalidRoleException();
             }
+        }
+        if(censorConfig.censorBadText(user.getDescription()).contains("*")) {
+            throw new InvalidUserException("User description cannot contain inappropriate language.");
         }
         return true;
     }

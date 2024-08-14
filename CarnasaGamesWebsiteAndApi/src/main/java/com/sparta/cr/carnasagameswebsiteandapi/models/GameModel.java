@@ -1,11 +1,7 @@
 package com.sparta.cr.carnasagameswebsiteandapi.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-
-import java.util.List;
 
 @Entity
 @Table(schema = "games_website", name = "games")
@@ -86,6 +82,22 @@ public class GameModel {
 
     public void setTimesPlayed(Integer timesPlayed) {
         this.timesPlayed = timesPlayed;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 
     @Override

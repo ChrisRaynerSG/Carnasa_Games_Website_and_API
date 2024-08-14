@@ -124,4 +124,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericUnauthorizedException(Exception ex, HttpServletRequest request){
         return new ResponseEntity<>(new ErrorResponse("UNAUTHORIZED", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.UNAUTHORIZED);
     }
+    @ExceptionHandler(GenericForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> handleGenericForbiddenException(Exception ex, HttpServletRequest request){
+        return new ResponseEntity<ErrorResponse>(new ErrorResponse("FORBIDDEN", ex.getMessage(), request.getRequestURL().toString()), HttpStatus.FORBIDDEN);
+    }
 }

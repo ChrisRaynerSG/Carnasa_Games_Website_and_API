@@ -1,6 +1,5 @@
 package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
-import com.sparta.cr.carnasagameswebsiteandapi.annotations.CurrentOwner;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ModelNotFoundException;
@@ -138,6 +137,10 @@ public class HighScoreApiController {
         if(authentication == null){
             throw new InvalidUserException("Please login to save a new high score");
         }
+        if(userService.getUserByUsername(authentication.getName()).isEmpty()){//should not happen
+            throw new InvalidUserException("Please login to save a new high score");
+        }
+        highScoreModel.setUserModel(userService.getUserByUsername(authentication.getName()).get()); //set user as logged in user
         highScoreService.validateNewHighScore(highScoreModel);
         HighScoreModel newHighScore = highScoreService.createHighScore(highScoreModel);
         URI location = URI.create("/api/scores/search/" + newHighScore.getScoreId());
@@ -146,6 +149,7 @@ public class HighScoreApiController {
     }
     @PutMapping("/update/{scoreId}")
     public ResponseEntity<EntityModel<HighScoreModel>> updateHighScore(@PathVariable Long scoreId, @RequestBody HighScoreModel highScoreModel, Authentication authentication){
+        //update so only admin can update score
         if(authentication == null){
             throw new GenericUnauthorizedException("Please login as admin to update this score");
         }
@@ -163,7 +167,7 @@ public class HighScoreApiController {
     @DeleteMapping("/delete/{scoreId}")
     public ResponseEntity<EntityModel<HighScoreModel>> deleteHighScore(@PathVariable Long scoreId, Authentication authentication){
         if(authentication == null){
-            throw new GenericUnauthorizedException("Please login as admin or user: " + scoreId + " to delete this score");
+            throw new GenericUnauthorizedException("Please login as admin to delete this score");
         }
         if(highScoreService.getHighScore(scoreId).isEmpty()){
             return ResponseEntity.notFound().build();

@@ -3,9 +3,7 @@ package com.sparta.cr.carnasagameswebsiteandapi.security.jwt;
 import com.sparta.cr.carnasagameswebsiteandapi.security.SecurityUser;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -45,9 +43,6 @@ public class JwtUtilities {
     public String generateToken(SecurityUser user){
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
-        for (Map.Entry<String,Object> claim : claims.entrySet()) {
-            System.out.println(claim.getKey() + " " + claim.getValue());
-        }
         return createToken(claims, user.getUsername());
     }
 

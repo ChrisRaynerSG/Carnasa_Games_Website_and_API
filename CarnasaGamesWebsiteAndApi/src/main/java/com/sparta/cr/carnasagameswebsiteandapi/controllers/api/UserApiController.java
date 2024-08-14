@@ -2,10 +2,10 @@ package com.sparta.cr.carnasagameswebsiteandapi.controllers.api;
 
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.ForbiddenRoleException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.GenericUnauthorizedException;
-import com.sparta.cr.carnasagameswebsiteandapi.exceptions.globalexceptions.InvalidUserException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UserNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.exceptions.userexceptions.UsernameNotFoundException;
 import com.sparta.cr.carnasagameswebsiteandapi.models.UserModel;
+import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UpdatePasswordDto;
 import com.sparta.cr.carnasagameswebsiteandapi.models.dtos.UserDto;
 import com.sparta.cr.carnasagameswebsiteandapi.security.jwt.AnonymousAuthentication;
 import com.sparta.cr.carnasagameswebsiteandapi.services.implementations.*;
@@ -119,11 +119,53 @@ public class UserApiController {
             return ResponseEntity.badRequest().build();
         }
         if(isRoleAdmin(authentication) ||authentication.getName().equals(userService.getUser(userId).get().getUsername())){
+            //can only update if admin or specific user - specific user cant update role
             userService.validateExistingUserUpdate(userModel);
             userService.updateUser(userModel);
             return ResponseEntity.noContent().build();
         }
         else throw new ForbiddenRoleException();
+    }
+
+//    @PatchMapping("/update/{userId}/{field}")
+//    public ResponseEntity<EntityModel<UserModel>> updateUserFieldIndividually(@PathVariable Long userId, @PathVariable String field,  Authentication authentication) {
+//
+//        //if password require previous password input and only user can change this, if anything else no password input and admin can change. (maybe two different endpoints for this)
+//        if(authentication == null){
+//            throw new GenericUnauthorizedException("Please login as admin or user: " + userId + " to update " + field);
+//        }
+//        if(userService.getUser(userId).isEmpty()) {
+//            throw new UserNotFoundException(userId.toString());
+//        }
+//        else if(!userService.getUser(userId).get().getUsername().equals(authentication.getName())){
+//            throw new ForbiddenRoleException();
+//        }
+//        else {
+//
+//        }
+//    }
+
+    @PatchMapping("/update/{userId}/roles")
+    public ResponseEntity<EntityModel<UserModel>> grantOrRemoveAdmin(@PathVariable Long userId) {
+            userService.updateUserRoles(userId);
+            return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("update/{userId}/password")
+    public ResponseEntity<EntityModel<UserModel>> updateUserPassword(@PathVariable Long userId, @RequestBody UpdatePasswordDto updatePasswordDto, Authentication authentication) {
+        if(authentication == null){
+            throw new GenericUnauthorizedException("Please login as user: " + userId + " to update password");
+        }
+        if(userService.getUser(userId).isEmpty()) {
+            throw new UserNotFoundException(userId.toString());
+        }
+        else if(!userService.getUser(userId).get().getUsername().equals(authentication.getName())){
+            throw new ForbiddenRoleException();
+        }
+        else{
+            userService.updateUserPassword(updatePasswordDto);
+            return ResponseEntity.noContent().build();
+        }
     }
 
     @DeleteMapping("/delete/{userId}")
