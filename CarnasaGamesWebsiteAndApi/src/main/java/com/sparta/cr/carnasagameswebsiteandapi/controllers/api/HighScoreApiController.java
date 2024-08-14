@@ -167,7 +167,7 @@ public class HighScoreApiController {
     @DeleteMapping("/delete/{scoreId}")
     public ResponseEntity<EntityModel<HighScoreModel>> deleteHighScore(@PathVariable Long scoreId, Authentication authentication){
         if(authentication == null){
-            throw new GenericUnauthorizedException("Please login as admin or user: " + scoreId + " to delete this score");
+            throw new GenericUnauthorizedException("Please login as admin to delete this score");
         }
         if(highScoreService.getHighScore(scoreId).isEmpty()){
             return ResponseEntity.notFound().build();
